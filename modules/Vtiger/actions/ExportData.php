@@ -253,10 +253,10 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 
 		ob_clean();
 		$fp = fopen("php://output", "a+");
-		fputcsv($fp, $headers);	
+		fputcsv($fp, Vtiger_Functions::sanitizeForCSVExport($headers));	
 
 		foreach($entries as $row) {
-			fputcsv($fp, $row);
+			fputcsv($fp, Vtiger_Functions::sanitizeForCSVExport($row));
 		}
 	}
 

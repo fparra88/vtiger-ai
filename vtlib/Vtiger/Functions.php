@@ -1862,4 +1862,21 @@ class Vtiger_Functions {
 		}
 		return implode("", $parts);
 	}
+
+	/* Project against CSV Injection when opened with Spreadsheet apps.
+	 * If value starts with macro / forumula quote it forcefully.
+	 * https://owasp.org/www-community/attacks/CSV_Injection
+	 */
+	static function sanitizeForCSVExport($row) {
+		foreach ($row as $k => $v) {
+			if ($v && is_string($v)) {
+				switch ($v[0]) {
+					case "=": case "+": case "-": case "@": case "\t": case "\r":
+						$row[$k] = "'" . $v;
+						break;
+				}				
+			}
+		}
+		return $row;
+	}
 }
