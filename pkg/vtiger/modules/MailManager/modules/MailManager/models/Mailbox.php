@@ -46,6 +46,7 @@ class MailManager_Mailbox_Model {
 
 	public function setServer($server) {
 		$this->mServer = trim($server);
+		$this->mServerName = self::setServerName($server);
 	}
 
 	public function serverName() {
