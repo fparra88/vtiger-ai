@@ -19,6 +19,11 @@ class Users_Login_Action extends Vtiger_Action_Controller {
 	} 
 
 	function process(Vtiger_Request $request) {
+		if ($_SERVER["REQUEST_METHOD"] != "POST") {
+			echo "Invalid request";
+			exit();
+		}
+
 		$username = $request->get('username');
 		$password = $request->getRaw('password');
 
