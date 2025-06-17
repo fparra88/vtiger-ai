@@ -107,6 +107,9 @@ class Emails_Mailer_Model extends Vtiger_Mailer {
 	}
 
 	public function convertToValidURL($htmlContent) {
+		// early return for blank content.
+		if (!$htmlContent || empty($htmlContent)) return $htmlContent;
+		
 		if (!$this->dom) {
 			$this->dom = new DOMDocument();
 			@$this->dom->loadHTML($htmlContent);
