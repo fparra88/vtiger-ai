@@ -579,7 +579,7 @@ Vtiger_Field_Js('Vtiger_Text_Field_Js',{},{
 	 * @return - input text field
 	 */
 	getUi : function() {
-		var html = '<textarea class="input-xxlarge form-control inputElement" name="'+ this.getName() +'" value="'+ this.getValue() + '" >'+ this.getValue() + '</textarea>';
+		var html = '<textarea class="input-xxlarge form-control inputElement" name="'+ this.getName() +'" value="'+ encodeURIComponent(this.getValue()) + '" >'+ this.getValue() + '</textarea>';
 		var element = jQuery(html);
 		return this.addValidationToElement(element);
 	}
