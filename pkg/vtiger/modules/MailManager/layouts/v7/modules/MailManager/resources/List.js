@@ -713,7 +713,14 @@ Vtiger_List_Js("MailManager_List_Js", {}, {
 				self.registerReplyAllEvent();
 				self.showRelatedActions();
 				self.registerMailPaginationEvent();
-				container.find('.emailDetails').popover({html: true});
+				let popoverEl = container.find('.emailDetails').popover({html: true});
+				/* enable allowed-tags in popover */
+				for (var tag of ["table", "tbody", "thead", "tr", "th", "td"]) {
+					if (!popoverEl.popover.Constructor.DEFAULTS.whiteList[tag]) {
+						popoverEl.popover.Constructor.DEFAULTS.whiteList[tag] = [];
+					}
+				}
+				
 				self.updateUnreadCount("-"+unreadCount, jQuery(parentEle).data('folder'));
 				self.loadContentsInIframe(container.find('#mmBody'));
 			});
