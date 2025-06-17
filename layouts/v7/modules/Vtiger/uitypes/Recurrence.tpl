@@ -30,13 +30,10 @@
 				</span>
 				<span class="col-sm-2 padding0px">
 					<select class="select2 input-medium" style="width:85px;margin-left: 10px;" name="recurringtype" id="recurringType">
-					{if isset($RECURRING_INFORMATION['eventrecurringtype'])}
 						<option value="Daily" {if $RECURRING_INFORMATION['eventrecurringtype'] eq 'Daily'} selected {/if}>{vtranslate('LBL_DAYS_TYPE', $MODULE)}</option>
 						<option value="Weekly" {if $RECURRING_INFORMATION['eventrecurringtype'] eq 'Weekly'} selected {/if}>{vtranslate('LBL_WEEKS_TYPE', $MODULE)}</option>
 						<option value="Monthly" {if $RECURRING_INFORMATION['eventrecurringtype'] eq 'Monthly'} selected {/if}>{vtranslate('LBL_MONTHS_TYPE', $MODULE)}</option>
-						<option value="Yearly" {if $RECURRING_INFORMATION['eventrecurringtype'] eq 'Yearly'} selected {/if}>{vtranslate('LBL_YEAR_TYPE', $MODULE)}</option>
-					{/if}
-						
+						<option value="Yearly" {if $RECURRING_INFORMATION['eventrecurringtype'] eq 'Yearly'} selected {/if}>{vtranslate('LBL_YEAR_TYPE', $MODULE)}</option>						
 					</select>
                                         <span class="alignMiddle displayInlineBlock">&nbsp;&nbsp;{vtranslate('LBL_UNTIL', $MODULE)}</span>
 				</span>
