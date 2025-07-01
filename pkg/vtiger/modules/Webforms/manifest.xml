@@ -74,6 +74,7 @@
 			<sql><![CDATA[CREATE TABLE `vtiger_webforms_field` (
   `id` int(19) NOT NULL AUTO_INCREMENT,
   `webformid` int(19) NOT NULL,
+  `fieldid` int(19) NOT NULL,
   `fieldname` varchar(50) NOT NULL,
   `neutralizedfield` varchar(50) NOT NULL,
   `defaultvalue` TEXT DEFAULT NULL,
