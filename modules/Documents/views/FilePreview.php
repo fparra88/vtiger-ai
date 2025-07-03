@@ -74,6 +74,7 @@ class Documents_FilePreview_View extends Vtiger_IndexAjax_View {
 		}
 		$viewer = $this->getViewer($request);
 		$viewer->assign('MODULE_NAME',$moduleName);
+		$viewer->assign('FILE_PREVIEW_NOT_SUPPORTED','no');
 		if(in_array($extn,$basicFileTypes))
 			$viewer->assign('BASIC_FILE_TYPE','yes');
 		else if(in_array($type,$videoFileTypes))
