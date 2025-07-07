@@ -3,6 +3,11 @@ if (defined('VTIGER_UPGRADE')) {
     global $adb, $current_user;
     $db = PearDatabase::getInstance();
 
+    // MailScanner
+    $db->pquery("ALTER TABLE vtiger_mailscanner ADD COLUMN auth_type VARCHAR(20) AFTER sslmethod");
+    $db->pquery("ALTER TABLE vtiger_mailscanner ADD COLUMN auth_expireson LONG AFTER auth_type");
+    $db->pquery("ALTER TABLE vtiger_mailscanner ADD COLUMN mail_proxy VARCHAR(50) AFTER auth_expireson");
+
     // Webforms: Shift foreign key from (fieldname to fieldid) and set existing values.
     $db->pquery("ALTER TABLE vtiger_webforms_field drop foreign key fk_3_vtiger_webforms_field"); /* on fieldname */
     $db->pquery("ALTER TABLE vtiger_webforms_field add column fieldid int(19) after webformid"); 
