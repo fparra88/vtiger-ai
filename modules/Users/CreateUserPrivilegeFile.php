@@ -26,7 +26,7 @@ function createUserPrivilegesfile($userid)
 	global $root_directory;
 	$handle=@fopen($root_directory.'user_privileges/user_privileges_'.$userid.'.php',"w+");
 
-	if($handle)
+	if($handle && flock($handle, LOCK_EX))
 	{
 		$newbuf='';
 		$newbuf .="<?php\n\n";
@@ -52,6 +52,7 @@ function createUserPrivilegesfile($userid)
 			$newbuf .= "\n";
 			$newbuf .= "?>";
 			fputs($handle, $newbuf);
+			flock($handle, LOCK_UN);
 			fclose($handle);
 			return;	
 		}
@@ -101,6 +102,7 @@ function createUserPrivilegesfile($userid)
 
 			$newbuf .= "?>";
 			fputs($handle, $newbuf);
+			flock($handle, LOCK_UN);
 			fclose($handle);
 		}
 	}
@@ -117,7 +119,7 @@ function createUserSharingPrivilegesfile($userid)
 	require('user_privileges/user_privileges_'.$userid.'.php');
 	$handle=@fopen($root_directory.'user_privileges/sharing_privileges_'.$userid.'.php',"w+");
 	
-if($handle)
+if($handle && flock($handle, LOCK_EX))
 	{
 		$newbuf='';
 		$newbuf .="<?php\n\n";
@@ -130,6 +132,7 @@ if($handle)
 			$newbuf .= "\n";
 			$newbuf .= "?>";
 			fputs($handle, $newbuf);
+			flock($handle, LOCK_UN);
 			fclose($handle);
 			return;	
 		}
@@ -392,6 +395,7 @@ if($handle)
 	
 			$newbuf .= "?>";
 			fputs($handle, $newbuf);
+			flock($handle, LOCK_UN);
 			fclose($handle);
 
 			//Populating Temp Tables

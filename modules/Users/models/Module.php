@@ -158,7 +158,7 @@ class Users_Module_Model extends Vtiger_Module_Model {
 			$contents = file_get_contents($filename);
 			$currentBaseCurrenyName = $this->getBaseCurrencyName();
 			$contents = str_replace('$currency_name = \''.$currentBaseCurrenyName.'\'', $currencyName, $contents);
-			file_put_contents($filename, $contents);
+			file_put_contents($filename, $contents, LOCK_EX);
 		}
 	}
 

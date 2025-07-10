@@ -411,7 +411,8 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model {
 			}
 
 			//Write file
-			$fp = fopen($fileName, "w");
+			$fp = fopen($fileName, "w+");
+			flock($fp, LOCK_EX);
 			if ($languageStrings) {
 				fwrite($fp, "<?php\n\$languageStrings = array(\n");
 				foreach ($languageStrings as $key => $value) {
@@ -431,6 +432,7 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model {
 				}
 				fwrite($fp, ");");
 			}
+			flock($fp, LOCK_UN);
 			fclose($fp);
 			unset($languageStrings);
 			unset($jsLanguageStrings);

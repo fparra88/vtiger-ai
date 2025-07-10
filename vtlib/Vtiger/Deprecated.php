@@ -194,6 +194,10 @@ class Vtiger_Deprecated {
 					echo "Cannot open file ($filename)";
 					exit;
 				}
+				if (!flock($handle, LOCK_EX)) {
+					echo "Cannot lock file ($filename)";
+					exit;
+				}
 				require_once('modules/Users/CreateUserPrivilegeFile.php');
 				$newbuf = '';
 				$newbuf .="<?php\n\n";
@@ -211,6 +215,7 @@ class Vtiger_Deprecated {
 				$newbuf .= "\$action_name_array=" . constructSingleStringValueArray($actionname_array) . ";\n";
 				$newbuf .= "?>";
 				fputs($handle, $newbuf);
+				flock($handle, LOCK_UN);
 				fclose($handle);
 			} else {
 				echo "The file $filename is not writable";
@@ -238,6 +243,10 @@ class Vtiger_Deprecated {
 			if (is_writable($filename)) {
 				if (!$handle = fopen($filename, 'w+')) {
 					echo "Cannot open file ($filename)";
+					exit;
+				}
+				if (!flock($handle, LOCK_EX)) {
+					echo "Cannot lock file ($filename)";
 					exit;
 				}
 				require_once('modules/Users/CreateUserPrivilegeFile.php');
@@ -274,6 +283,7 @@ class Vtiger_Deprecated {
 				$newbuf .="\n";
 				$newbuf .= "?>";
 				fputs($handle, $newbuf);
+				flock($handle, LOCK_UN);
 				fclose($handle);
 			} else {
 				echo "The file $filename is not writable";
