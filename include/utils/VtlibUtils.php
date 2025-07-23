@@ -671,7 +671,15 @@ function vtlib_purify($input, $ignore = false) {
     static $purified_cache = array();
     $value = $input;
 
+    // pre-condition check (for safe textonly value)
+    static $suspected_chars = '<>&"\'%()';
     if (!is_array($input)) {
+	if (is_string($input) && !$ignore && strpbrk($input, $suspected_chars) === false) {
+            $ignore = true;
+	}
+    }
+
+    if (!$ignore && !is_array($input)) {
         $md5OfInput = md5($input ? $input : "");
         if (array_key_exists($md5OfInput, $purified_cache)) {
             $value = $purified_cache[$md5OfInput];
