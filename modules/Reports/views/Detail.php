@@ -138,9 +138,7 @@ class Reports_Detail_View extends Vtiger_Index_View {
 		foreach($dateFilters as $comparatorKey => $comparatorInfo) {
 			$comparatorInfo['startdate'] = DateTimeField::convertToUserFormat($comparatorInfo['startdate']);
 			$comparatorInfo['enddate'] = DateTimeField::convertToUserFormat($comparatorInfo['enddate']);
-			if (isset($module)) {
-				$comparatorInfo['label'] = vtranslate($comparatorInfo['label'],$module);
-			}
+			$comparatorInfo['label'] = vtranslate($comparatorInfo['label'], $moduleName ?? 'Vtiger');
 			$dateFilters[$comparatorKey] = $comparatorInfo;
 		}
 		$viewer->assign('DATE_FILTERS', $dateFilters);
