@@ -197,7 +197,7 @@ class VtigerModuleOperation extends WebserviceEntityOperation {
 		$output = array();
 		for($i=0; $i<$noofrows; $i++){
 			$row = $this->pearDB->fetchByAssoc($result,$i);
-			if(!isset($row[$tableIdColumn]) || !$meta->hasPermission(EntityMeta::$RETRIEVE,$row[$tableIdColumn])){
+			if(!isset($row[$tableIdColumn])){
 				continue;
 			}
 			$output[$row[$tableIdColumn]] = DataTransform::sanitizeDataWithColumn($row,$meta);
