@@ -197,10 +197,13 @@ class VtigerModuleOperation extends WebserviceEntityOperation {
 		$output = array();
 		for($i=0; $i<$noofrows; $i++){
 			$row = $this->pearDB->fetchByAssoc($result,$i);
-			if(!isset($row[$tableIdColumn])){
+			// special case for count(*) query - which will not have id field fetched
+			if (!isset($row[$tableIdColumn]) && array_key_exists("count(*)", $row)) {
+				$output[] = DataTransform::sanitizeDataWithColumn($row, $meta);
 				continue;
+			} else if (isset($row[$tableIdColumn])){
+				$output[$row[$tableIdColumn]] = DataTransform::sanitizeDataWithColumn($row,$meta);
 			}
-			$output[$row[$tableIdColumn]] = DataTransform::sanitizeDataWithColumn($row,$meta);
 		}
 		
 		$newOutput = array();
