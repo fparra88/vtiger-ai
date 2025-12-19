@@ -78,6 +78,12 @@ function vtws_convertlead($element, $user) {
 	foreach ($availableModules as $entityName) {
 		if ($element['entities'][$entityName]['create']) {
 			$entityvalue = $element['entities'][$entityName];
+			
+			// Do not allow entities other than desired be created for this operation.
+			if (!in_array($entityvalue['name'], $availableModules)) {
+				throw new Exception("Entity not allowed");
+			}
+
 			$entityObject = VtigerWebserviceObject::fromName($adb, $entityvalue['name']);
 			$handlerPath = $entityObject->getHandlerPath();
 			$handlerClass = $entityObject->getHandlerClass();
