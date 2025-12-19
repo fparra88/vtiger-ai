@@ -97,7 +97,10 @@ require_once("config.php");
 					$sessionId = vtws_getParameter($_COOKIE,'PHPSESSID');
 				}
 				// END
-				$adoptSession = true;
+
+				/* TODO: Need to check targetSession (if valid & fresh & associated with same user) */
+				/* file-based / external session store limits us from the check - disabling this for now */
+				// $adoptSession = true;
 			}else{
 				writeErrorOutput($operationManager,new WebServiceException(WebServiceErrorCode::$AUTHREQUIRED,"Authencation required"));
 				return;
