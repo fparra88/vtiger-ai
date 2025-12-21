@@ -8,7 +8,7 @@
  * All Rights Reserved.
  *************************************************************************************/
 
-class Vtiger_GuardedArray implements \ArrayAccess {
+class Vtiger_GuardedArray implements \ArrayAccess, \Iterator {
     private $data;
 
     function __construct($data = null) {
@@ -37,4 +37,39 @@ class Vtiger_GuardedArray implements \ArrayAccess {
     function offsetUnset($key) {
         unset($this->data[$key]);
     }
+
+    // Iterator methods
+    #[\ReturnTypeWillChange]
+    public function rewind() {
+        $this->keys = array_keys($this->data);
+        $this->position = 0;
+    }
+
+    #[\ReturnTypeWillChange]
+    public function current() {
+        if (!$this->valid()) {
+            return null;
+        }
+        $key = $this->keys[$this->position];
+        return $this->data[$key];
+    }
+
+    #[\ReturnTypeWillChange]
+    public function key() {
+        if (!$this->valid()) {
+            return null;
+        }
+        return $this->keys[$this->position];
+    }
+
+    #[\ReturnTypeWillChange]
+    public function next() {
+        ++$this->position;
+    }
+
+    #[\ReturnTypeWillChange]
+    public function valid() {
+        return isset($this->keys[$this->position]);
+    }
+
 }
