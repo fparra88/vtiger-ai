@@ -56,7 +56,7 @@ class Oauth2_TokenRefresher_Handler {
                     $newexpireson = $access_token->getExpires();
                     $newpassword = Vtiger_Functions::toProtectedText(json_encode($tokens));
 
-                    $db->pquery("UPDATE vtiger_systems SET password=?, auth_expireson=? WHERE id=?", 
+                    $db->pquery("UPDATE vtiger_systems SET server_password=?, smtp_auth_expireson=? WHERE id=?", 
                         array($newpassword, $newexpireson, $record['id']));
 
                     echo sprintf("Updated Token for OutgoingServer #%d [%s]\n", $record["id"], $record["server_username"]);
@@ -79,7 +79,7 @@ class Oauth2_TokenRefresher_Handler {
                 $svc = null;
                 switch($record["server"]) {
                     case "imap.gmail.com": $svc = "Google"; break;
-                    default: continue;
+                    default: return;
                 }
                 try {
                     $cfg = $config->getProviderConfig($svc);
@@ -117,7 +117,7 @@ class Oauth2_TokenRefresher_Handler {
                 $svc = null;
                 switch($record["mail_servername"]) {
                     case "imap.gmail.com": $svc = "Google"; break;
-                    default: continue;
+                    default: return;
                 }
                 try {
                     $cfg = $config->getProviderConfig($svc);
