@@ -466,8 +466,10 @@ class VtigerInventoryOperation extends VtigerModuleOperation {
 				$focus->column_fields[$fieldName] = decode_html($fieldValue);
 			}
 		}
-		$ids = vtws_getIdComponents($element['id']);
-		$focus->id = $ids[1];
+		if (isset($element['id'])) {
+			$ids = vtws_getIdComponents($element['id']);
+			$focus->id = $ids[1];
+		}
 
 		return $focus;
 	}
