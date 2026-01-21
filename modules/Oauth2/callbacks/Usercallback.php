@@ -116,9 +116,25 @@ class Oauth2_Usercallback_Callbacks {
                 $oauth2for = isset($_SESSION['oauth2for']) ? $_SESSION['oauth2for'] : "";
                 $oauth2svc = isset($_SESSION['oauth2svc']) ? $_SESSION['oauth2svc'] : "";
 
+                // Special case handling
+                if ($oauth2svc == "Zoho") {
+                    // Restricted email address (fallback to default)
+                    if (!isset($userinfo["Email"])) {
+                        $userinfo["Email"] = $authcfg["default_email"];
+                    }
+                    // We have a valid user.
+                    if (isset($userinfo["ZUID"]) && $userinfo["ZUID"]) {
+                        $userinfo["email"] = $userinfo["Email"]; /* normalize to our convention */
+                        $userinfo["email_verified"] = true;
+                    }
+                }
+                if (!isset($userinfo["email"]) || empty($userinfo["email"])) {
+                    throw new Exception("Unknown email");
+                }
+
                 if ($userinfo["email"] && $userinfo["email_verified"]) {
                     $tokens = array("access_token" => $accessTokenValue, "refresh_token" => $refreshTokenValue);
-                    static::updateTokensFor($config, $oauth2for, $oauth2svc, $userinfo, $tokens, $accessTokenExpiresOn);
+                    static::updateTokensFor($config, $authcfg, $oauth2for, $oauth2svc, $userinfo, $tokens, $accessTokenExpiresOn);
                 }
 
 
@@ -154,7 +170,7 @@ class Oauth2_Usercallback_Callbacks {
         }
     }
 
-    protected static function updateTokensFor($config, $oauth2for, $oauth2svc, $userinfo, $tokens, $expireson) {
+    protected static function updateTokensFor($config, $authcfg, $oauth2for, $oauth2svc, $userinfo, $tokens, $expireson) {
         $db = PearDatabase::getInstance();
 
         if ($oauth2for == "OutgoingServer") {
@@ -165,6 +181,9 @@ class Oauth2_Usercallback_Callbacks {
             if (strcasecmp($oauth2svc, "Google") === 0) {
                 $port = 465;
                 $server = "ssl://smtp.gmail.com:$port";
+            } else if (strcasecmp($oauth2svc, "Zoho") === 0) {
+                $port = 465;
+                $server = sprintf("ssl://smtp.zoho.%s:$port", $authcfg["endpoint_dc"] ? $authcfg["endpoint_dc"] : "com");
             }
             
             if ($db->num_rows($checkRs)) {
@@ -198,7 +217,11 @@ class Oauth2_Usercallback_Callbacks {
         } else if ($oauth2for == "MailConverter") {
             require_once "modules/Settings/MailConverter/handlers/MailScannerInfo.php";
 
-            $server = strcasecmp($oauth2svc, "Google") === 0? "imap.gmail.com" : "";
+            $server = "";
+            switch ($oauth2svc) {
+                case "Google": $server = "imap.gmail.com"; break;
+                case "Zoho": $server = sprintf("imap.zoho.%s", $authcfg["endpoint_dc"] ? $authcfg["endpoint_dc"] : "com"); break;
+            }
             $proxy  = $server && isset($config["Proxies"]) && isset($config["Proxies"][$server])? $config["Proxies"][$server] : "";
 
             $scanner = new Vtiger_MailScannerInfo(sprintf("%f",microtime(true)));
@@ -222,7 +245,12 @@ class Oauth2_Usercallback_Callbacks {
 
             require_once "modules/MailManager/models/Mailbox.php";
 
-            $server = strcasecmp($oauth2svc, "Google") === 0? "imap.gmail.com" : "";
+            $server = "";
+            switch ($oauth2svc) {
+                case "Google": $server = "imap.gmail.com"; break;
+                case "Zoho": $server = sprintf("imap.zoho.%s", $authcfg["endpoint_dc"] ? $authcfg["endpoint_dc"] : "com"); break;
+            }
+
             $proxy  = $server && isset($config["Proxies"]) && isset($config["Proxies"][$server])? $config["Proxies"][$server] : "";
 
             if ($server) {

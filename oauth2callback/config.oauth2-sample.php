@@ -17,10 +17,20 @@ return array(
         "clientSecret" => "",
     ),
 
+    // Create client in https://accounts.zoho.com/developerconsole
+    "Zoho" => array(
+        "clientId" => "",
+        "clientSecret" => "",
+        // Use the config below to override carefully 
+        //"default_email" => "", /* using personal account  */
+        //"endpoint_dc" => "",   /* multi-dc is not enabled */
+    ),
+
     // Setup XOAUTH2 Imap Proxy Service
     // https://code.vtiger.com/vtiger/vtigercrm/-/issues/1914
     // Update host:port details here.
     "Proxies" => array(
-        "imap.gmail.com" => ""
+        "imap.gmail.com" => "",
+        "imap.zoho.com"  => "", /* adjust endpoint_dc to match */
     )
 );

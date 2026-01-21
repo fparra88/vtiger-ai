@@ -45,6 +45,24 @@ class Oauth2_Config implements ArrayAccess {
                     $config["scopes"] = 'openid email profile https://mail.google.com/'; /* space separated */
                 }
                 break;
+            case "ZOHO":
+                // TODO - Decide TLD based on (email domain - .com, .au., .in)
+                $dc = isset($config["endpoint_dc"]) && $config["endpoint_dc"] ? $config["endpoint_dc"] : "com";
+
+                if (!isset($config["urlAuthorize"])) {
+                    $config["urlAuthorize"] = "https://accounts.zoho.{$dc}/oauth/v2/auth";
+                }
+                if (!isset($config["urlAccessToken"])) {
+                    $config["urlAccessToken"] = "https://accounts.zoho.{$dc}/oauth/v2/token";
+                }
+                if (!isset($config["urlResourceOwnerDetails"])) {
+                    $config["urlResourceOwnerDetails"] = "https://accounts.zoho.{$dc}/oauth/user/info";
+                }
+                if (!isset($config["scopes"])) {
+                    $scopes = ["email", "AAAServer.profile.READ", "ZohoMail.organization.accounts.ALL", "ZohoMail.accounts.ALL", "ZohoMail.folders.ALL", "ZohoMail.messages.ALL"];
+                    $config["scopes"] = implode(",", $scopes); /* comma separated */
+                }
+                break;
         }
 
         if (!isset($config["clientId"]) && isset($config["client_id"])) {

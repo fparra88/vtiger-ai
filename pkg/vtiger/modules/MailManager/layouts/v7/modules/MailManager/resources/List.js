@@ -120,7 +120,12 @@ Vtiger_List_Js("MailManager_List_Js", {}, {
 			var element = jQuery(e.currentTarget);
 			var serverType = element.val();
 			var useServer = '', useProtocol = '', useSSLType = '', useCert = '';
-			if (serverType == 'google-oauth2') {
+			if (serverType == 'zoho-oauth2') {
+				settingContainer.find('.settings_details').addClass('hide');
+				settingContainer.find('.additional_settings').addClass('hide');
+				settingContainer.find('.modal-footer').addClass('hide');
+				window.location.href = "oauth2callback/index.php?authfor=MailManager&authservice=Zoho";
+			} else if (serverType == 'google-oauth2') {
 				settingContainer.find('.settings_details').addClass('hide');
 				settingContainer.find('.additional_settings').addClass('hide');
 				settingContainer.find('.modal-footer').addClass('hide');
