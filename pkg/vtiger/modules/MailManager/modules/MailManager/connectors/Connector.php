@@ -86,7 +86,7 @@ class MailManager_Connector_Connector {
 		$this->mBoxUrl = $boxUrl;
 		$this->mBoxBaseUrl = $baseUrl; // Used for folder List
 
-		if($serverName == 'gmail') {
+		if($serverName == 'gmail' || $mailproxy != '') {
 			if ($authtype == "XOAUTH2") {
 				// route request to local-imap proxy server.
 				$boxUrl = sprintf("{%s/IMAP4/notls/novalidate-cert}INBOX", $mailproxy); 

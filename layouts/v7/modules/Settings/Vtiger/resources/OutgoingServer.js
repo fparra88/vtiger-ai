@@ -173,6 +173,8 @@ Vtiger.Class("Settings_Vtiger_OutgoingServer_Js",{},{
 				              
                 if(servertypevalue === "google-oauth2"){
                    window.location.href = "oauth2callback/index.php?authfor=OutgoingServer&authservice=Google";
+                }else if(servertypevalue === "zoho-oauth2"){
+                   window.location.href = "oauth2callback/index.php?authfor=OutgoingServer&authservice=Zoho";
                 }else{
 					form.find('[name="server_username"]').val("");
 					form.find('[name="server_password"]').val("");
