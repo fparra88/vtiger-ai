@@ -9,7 +9,7 @@
 
 jQuery.Class("Vtiger_CustomView_Js",{
 },{
-	contianer : false,
+	container : false,
 
 	advanceFilterInstance : false,
 
@@ -18,7 +18,7 @@ jQuery.Class("Vtiger_CustomView_Js",{
 	columnSelectElement : false,
 
 	reIntialize : function () {
-		this.contianer = false;
+		this.container = false;
 		this.columnListSelect2Element = false;
 		this.advanceFilterInstance = false;
 		this.columnSelectElement = false;
