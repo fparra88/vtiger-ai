@@ -132,6 +132,8 @@ Class Reports_Edit_View extends Vtiger_Edit_View {
 
 		if ($request->get('isDuplicate')) {
 			$viewer->assign('IS_DUPLICATE', true);
+		} else {
+			$viewer->assign('IS_DUPLICATE', false);
 		}
 		$viewer->view('Step1.tpl', $moduleName);
 	}
@@ -224,6 +226,8 @@ Class Reports_Edit_View extends Vtiger_Edit_View {
 
 		if ($request->get('isDuplicate')) {
 			$viewer->assign('IS_DUPLICATE', true);
+		} else {
+			$viewer->assign('IS_DUPLICATE', false);
 		}
 
 		$viewer->view('step2.tpl', $moduleName);
@@ -328,6 +332,8 @@ Class Reports_Edit_View extends Vtiger_Edit_View {
 		}
 		if ($request->get('isDuplicate')) {
 			$viewer->assign('IS_DUPLICATE', true);
+		} else {
+			$viewer->assign('IS_DUPLICATE', false);
 		}
 		$viewer->view('step3.tpl', $moduleName);
 	}
