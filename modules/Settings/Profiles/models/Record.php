@@ -502,7 +502,7 @@ class Settings_Profiles_Record_Model extends Settings_Vtiger_Record_Model {
 		$db->pquery('DELETE FROM vtiger_profile2tab WHERE profileid=? AND tabid=?', array($profileId, $tabId));
 
 		$actionPermissions = array();
-		$actionPermissions = isset($permissions['actions']) ? $permissions['actions'] : '';
+		$actionPermissions = isset($permissions['actions']) ? $permissions['actions'] : [];
 		$actionEnabled = false;
 		if($moduleModel->isEntityModule() || $moduleModel->isUtilityActionEnabled()) {
 			if($actionPermissions || $moduleModel->isUtilityActionEnabled()) {
