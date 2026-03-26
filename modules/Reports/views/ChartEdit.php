@@ -132,6 +132,8 @@ Class Reports_ChartEdit_View extends Vtiger_Edit_View {
 
 		if ($request->get('isDuplicate')) {
 			$viewer->assign('IS_DUPLICATE', true);
+		} else {
+			$viewer->assign('IS_DUPLICATE', false);
 		}
 
 		$viewer->view('ChartEditStep1.tpl', $moduleName);
@@ -206,6 +208,8 @@ Class Reports_ChartEdit_View extends Vtiger_Edit_View {
 		}
 		if ($request->get('isDuplicate')) {
 			$viewer->assign('IS_DUPLICATE', true);
+		} else {
+			$viewer->assign('IS_DUPLICATE', false);
 		}
 		$viewer->view('ChartEditStep2.tpl', $moduleName);
 	}
@@ -252,6 +256,8 @@ Class Reports_ChartEdit_View extends Vtiger_Edit_View {
 
 		if ($request->get('isDuplicate')) {
 			$viewer->assign('IS_DUPLICATE', true);
+		} else {
+			$viewer->assign('IS_DUPLICATE', false);
 		}
 
 		$viewer->assign('RECORD_ID', $record);
