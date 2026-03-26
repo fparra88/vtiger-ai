@@ -97,7 +97,7 @@ class Settings_Picklist_Module_Model extends Vtiger_Module_Model {
 			$tableName = $row['tablename'];
 			$columnName = $row['columnname'];
             if($fieldModel && $fieldModel->getFieldDataType() == 'multipicklist') {
-                $db->pquery('UPDATE '.$tableName.' SET '.$columnName.' = TRIM(BOTH " |##| " FROM REPLACE(CONCAT(" |##| ",CONCAT('.$columnName.', " |##| ")) , "|##| '.$oldValue.' |##|", "|##| '.$newValue.' |##|"))', array());
+                $db->pquery('UPDATE '.$tableName.' SET '.$columnName.' = TRIM(BOTH " |##| " FROM REPLACE(CONCAT(" |##| ",CONCAT('.$columnName.', " |##| ")) , "|##| ? |##|", "|##| ? |##|"))', array($oldValue, $newValue));
             } else {
                 $query = 'UPDATE ' . $tableName . ' SET ' . $columnName . '=? WHERE ' . $columnName . '=?';
 			    $db->pquery($query, array($newValue, $oldValue));
