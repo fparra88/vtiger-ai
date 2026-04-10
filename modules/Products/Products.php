@@ -183,7 +183,7 @@ class Products extends CRMEntity {
 		$currency_details = getAllCurrencies('all');
 
 		//Delete the existing currency relationship if any
-		if($this->mode == 'edit' && (isset($_REQUEST['action']) && $_REQUEST['action'] !== 'CurrencyUpdate'))
+		if($this->mode == 'edit' && (!isset($_REQUEST['action']) || (isset($_REQUEST['action']) && $_REQUEST['action'] !== 'CurrencyUpdate')))
 		{
 			for($i=0;$i<php7_count($currency_details);$i++)
 			{
