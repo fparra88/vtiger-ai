@@ -99,6 +99,8 @@ $languageStrings = array(
 	'LBL_UPLOAD_ICS'=>'Upload ICS File',
 	'LBL_IMPORT_FROM_ICS_FILE'=>'Import from ICS file',
 	'LBL_SELECT_ICS_FILE' => 'Select ICS file',
+	'LBL_TRIGGER_SAVE_EVENTS' => 'Trigger BeforeSave / AfterSave',
+	'LBL_TRIGGER_SAVE_EVENTS_HELP' => 'Run save triggers during import',
     
         //Scheduled Import translations
         'LBL_ENABLE_CRON' => '<b>Please do enable Scheduled Import cron job from settings scheduler</b>',

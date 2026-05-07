@@ -24,6 +24,7 @@
             <input type="hidden" name="has_header" value='{$HAS_HEADER}' />
             <input type="hidden" name="file_encoding" value='{$USER_INPUT->get('file_encoding')}' />
             <input type="hidden" name="delimiter" value='{$USER_INPUT->get('delimiter')}' />
+            <input type="hidden" name="trigger_save_events" value="{$USER_INPUT->get('trigger_save_events')}" />
 
             <div class='modal-body'>
 				{assign var=LABELS value=[]}
