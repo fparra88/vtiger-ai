@@ -34,6 +34,7 @@
                 <div>
                     <input type="hidden" id="type" name="type" value="csv" />
                     <input type="hidden" name="is_scheduled" value="1" />
+                    <input type="hidden" name="trigger_save_events" value="0" />
                     <div class="fileUploadBtn btn btn-primary">
                         <span><i class="fa fa-laptop"></i> {vtranslate('Select from My Computer', $MODULE)}</span>
                         <input type="file" name="import_file" id="import_file" onchange="Vtiger_Import_Js.checkFileType(event)" data-file-formats="{if $FORMAT eq ''}csv{else}{$FORMAT}{/if}" />
@@ -84,6 +85,15 @@
                     </td>
                 </tr>
             {/if}
+            <tr id="trigger_save_events_container" style="height:50px" {if $ENABLE_EVENTS_WITH_IMPORT eq FALSE} hidden {/if} >
+                <td>{'LBL_TRIGGER_SAVE_EVENTS'|@vtranslate:$MODULE}</td>
+                <td>
+                    <label class="checkbox-inline">
+                        <input type="checkbox" id="trigger_save_events" name="trigger_save_events" value="1" {if isset($TRIGGER_SAVE_EVENTS) && $TRIGGER_SAVE_EVENTS eq 1}checked{/if} />
+                        {'LBL_TRIGGER_SAVE_EVENTS_HELP'|@vtranslate:$MODULE}
+                    </label>
+                </td>
+            </tr>
         {/if}
     </table>
 </div>

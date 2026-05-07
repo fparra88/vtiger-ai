@@ -35,5 +35,8 @@ $PERFORMANCE_CONFIG = Array(
 	// reduce number of ajax requests on home page, reduce this value if home page widget dont
 	// show value.
 	'HOME_PAGE_WIDGET_GROUP_SIZE' => 12,
+    
+        // Enable checkbox to trigger events in Import form
+        'ENABLE_EVENTS_WITH_IMPORT' => FALSE,
 );
 ?>

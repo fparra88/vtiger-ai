@@ -11,6 +11,39 @@
 
 class Vtiger_Import_View extends Vtiger_Index_View {
 
+	protected function getImportTriggerSaveEventsSessionKey($moduleName, $userId) {
+		return 'IMPORT_TRIGGER_SAVE_EVENTS_'.$moduleName.'_'.$userId;
+	}
+
+	protected function toBoolean($value) {
+		if (is_bool($value)) {
+			return $value;
+		}
+		if (is_array($value)) {
+			$value = end($value);
+		}
+
+		$value = strtolower(trim((string) $value));
+		return in_array($value, array('1', 'true', 'on', 'yes'), true);
+	}
+
+	protected function isTriggerSaveEventsEnabled(Vtiger_Request $request) {
+		$user = Users_Record_Model::getCurrentUserModel();
+		$sessionKey = $this->getImportTriggerSaveEventsSessionKey($request->getModule(), $user->id);
+
+		if ($request->has('trigger_save_events')) {
+			$triggerSaveEvents = $this->toBoolean($request->get('trigger_save_events'));
+			Vtiger_Session::set($sessionKey, $triggerSaveEvents ? 1 : 0);
+			return $triggerSaveEvents;
+		}
+
+		if ($request->getMode() == 'continueImport') {
+			return $this->toBoolean(Vtiger_Session::get($sessionKey, 0));
+		}
+
+		return false;
+	}
+
 	function __construct() {
 		parent::__construct();
 		$this->exposeMethod('continueImport');
@@ -36,7 +69,8 @@ class Vtiger_Import_View extends Vtiger_Index_View {
 	function process(Vtiger_Request $request) {
 		global $VTIGER_BULK_SAVE_MODE;
 		$previousBulkSaveMode = $VTIGER_BULK_SAVE_MODE;
-		$VTIGER_BULK_SAVE_MODE = true;
+		$triggerSaveEvents = $this->isTriggerSaveEventsEnabled($request);
+		$VTIGER_BULK_SAVE_MODE = $triggerSaveEvents ? false : true;
 
 		$mode = $request->getMode();
 		if(!empty($mode)) {
@@ -144,6 +178,14 @@ class Vtiger_Import_View extends Vtiger_Index_View {
 			$viewer->assign('CURRENCIES', getAllCurrencies());
 		}
 
+		$viewer->assign('TRIGGER_SAVE_EVENTS', $this->toBoolean($request->get('trigger_save_events')) ? 1 : 0);
+                
+                global $PERFORMANCE_CONFIG;
+                if(isset($PERFORMANCE_CONFIG['ENABLE_EVENTS_WITH_IMPORT'])) {
+                    $viewer->assign('ENABLE_EVENTS_WITH_IMPORT', $PERFORMANCE_CONFIG['ENABLE_EVENTS_WITH_IMPORT']);
+                }else { 
+                    $viewer->assign('ENABLE_EVENTS_WITH_IMPORT', FALSE); 
+                }
 		$viewer->assign('FORMAT', $fileFormat);
 		return $viewer->view('ImportBasicStep.tpl', 'Import');
 	}
@@ -180,6 +222,7 @@ class Vtiger_Import_View extends Vtiger_Index_View {
 
 			$viewer = $this->getViewer($request);
 			$autoMerge = $request->get('auto_merge');  
+			$request->set('trigger_save_events', $this->toBoolean($request->get('trigger_save_events')) ? 1 : 0);
 			if(!$autoMerge) {
 				$request->set('merge_type', 0);
 				$request->set('merge_fields', '');
