@@ -451,7 +451,7 @@ class Vtiger_Deprecated {
 		if (stripos($realfilepath, $rootdirpath) !== 0 || in_array($filePathParts[0], $unsafeDirectories)) {
 			$a = debug_backtrace();
                         $backtrace = 'Traced on '.date('Y-m-d H:i:s')."\n";
-                        $backtrace .= "FileAccessForInclusion - \n";
+                        $backtrace .= "FileAccessForInclusion - $filepath \n";
                         foreach ($a as $b) {
                             $backtrace .=  $b['file'] . '::' . $b['function'] . '::' . $b['line'] . '<br>'.PHP_EOL;
                         }
@@ -487,7 +487,7 @@ class Vtiger_Deprecated {
 		if (stripos($realfilepath, $rootdirpath) !== 0 || !in_array($filePathParts[0], $safeDirectories)) {
                     $a = debug_backtrace();
                     $backtrace = 'Traced on '.date('Y-m-d H:i:s')."\n";
-                    $backtrace .= "FileAccessForDeletion - \n";
+                    $backtrace .= "FileAccessForDeletion - $filepath \n";
                     foreach ($a as $b) {
                         $backtrace .=  $b['file'] . '::' . $b['function'] . '::' . $b['line'] . '<br>'.PHP_EOL;
                     }

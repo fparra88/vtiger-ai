@@ -75,7 +75,7 @@ class Vtiger_Utils {
                     if($dieOnFail) {
                         $a = debug_backtrace();
                         $backtrace = 'Traced on '.date('Y-m-d H:i:s')."\n";
-                        $backtrace .= "FileAccessForInclusion - \n";
+                        $backtrace .= "FileAccessForInclusion - $filepath \n";
                         foreach ($a as $b) {
                              $backtrace .=  $b['file'] . '::' . $b['function'] . '::' . $b['line'] . '<br>'.PHP_EOL;
                         }
