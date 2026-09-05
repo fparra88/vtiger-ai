@@ -38,18 +38,23 @@
 			
 			$lex = new VTQL_Lexer($this->query);
 			$parser = new VTQL_Parser($this->user, $lex,$this->out);
-			while ($lex->yylex()) {
-				$parser->doParse($lex->token, $lex->value);
-			}
-			$parser->doParse(0, 0);
+			try {
+				while ($lex->yylex()) {
+					$parser->doParse($lex->token, $lex->value);
+				}
+				$parser->doParse(0, 0);
 			
-			if($parser->isSuccess()){
-				$this->hasError = false;
-				$this->query = $parser->getQuery();
-				$this->meta = $parser->getObjectMetaData();
-			}else{
+				if($parser->isSuccess()){
+					$this->hasError = false;
+					$this->query = $parser->getQuery();
+					$this->meta = $parser->getObjectMetaData();
+				}else{
+					$this->hasError = true;
+					$this->error = $parser->getErrorMsg();
+				}
+			} catch(Exception $e) {
 				$this->hasError = true;
-				$this->error = $parser->getErrorMsg();
+				$this->error = $e->getMessage();
 			}
 			
 			return $this->hasError;

@@ -176,7 +176,8 @@ class VtigerModuleOperation extends WebserviceEntityOperation {
 		$error = $parser->parse();
 		
 		if($error){
-			return $parser->getError();
+			throw new WebServiceException(WebServiceErrorCode::$QUERYSYNTAX,
+				$parser->getError());
 		}
 		
 		$mysql_query = $parser->getSql();
