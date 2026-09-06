@@ -37,7 +37,10 @@ class Migration_Index_View extends Vtiger_View_Controller {
 
 		$mode = $request->getMode();
 		if(!empty($mode)) {
+			global $adb;
+			$hardenedVal = $adb->setHardenedSql(false); // for speed and trusted backend input.
 			$this->invokeExposedMethod($mode, $request);
+			$adb->setHardenedSql($hardenedVal);         // restore state.
 		}
 	}
 

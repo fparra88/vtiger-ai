@@ -92,7 +92,7 @@ class PearDatabase{
 
 	// Force sql execution through PreparedStatement only. 
 	// Set to false when you are sure (not in production)
-	var $hardendedSql = true;
+	private $hardendedSql = true;
 
 	/**
 	 * Performance tunning parameters (can be configured through performance.prefs.php)
@@ -209,6 +209,8 @@ class PearDatabase{
 	/* SQLTime logging */
 	protected $logSqlTimingID = false;
 	function logSqlTiming($startat, $endat, $sql, $params=false) {
+		// file_put_contents("logs/p.log", $this->convert2Sql($sql, $params)."\n", FILE_APPEND);
+
         if(!PerformancePrefs::getBoolean('SQL_LOG_INCLUDE_CALLER', false)) {
         	return;
         }
@@ -907,6 +909,13 @@ class PearDatabase{
 	}
 
     }
+
+	// Internal API - use with caution.
+	function setHardenedSql($val) {
+		$old_val = $this->hardendedSql;
+		$this->hardendedSql = $val;
+		return $old_val;
+	}
 
     function resetSettings($dbtype,$host,$dbname,$username,$passwd){
 		global $dbconfig, $dbconfigoption;
