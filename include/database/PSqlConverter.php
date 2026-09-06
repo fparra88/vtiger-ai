@@ -15,15 +15,17 @@ final class PSqlConverter
         // Delimiter is '~' (not '/') because the block-comment alternative
         // contains literal '/' characters, which would otherwise collide
         // with a '/'-delimited pattern.
+        //
+        // NOTE: single-/double-quoted strings and backtick-quoted
+        // identifiers are deliberately NOT matched by this regex (see
+        // scanQuotedLiteral() below for why) - the pattern below only
+        // covers every other token kind.
         static $pattern = <<<'REGEX'
 ~
     \G(?:
           (?P<ws>[ \t\r\n]+)
         | (?P<linecomment>(?:--|\#)[^\n]*)
         | (?P<blockcomment>/\*[^*]*\*+(?:[^/*][^*]*\*+)*/)
-        | (?P<sqstring>'(?:[^'\\]+|\\[\s\S]|'')*')
-        | (?P<dqstring>"(?:[^"\\]+|\\[\s\S]|"")*")
-        | (?P<backtick>`(?:[^`]+|``)*`)
         | (?P<variable>@{1,2}[A-Za-z0-9_$.]*)
         | (?P<hexnum>0x[0-9A-Fa-f]+)
         | (?P<num>(?:\d+\.\d+|\.\d+|\d+)(?:[eE][+-]?\d+)?)
@@ -42,6 +44,30 @@ REGEX;
         $sawSemicolon = false;
 
         while ($index < $length) {
+            $ch = $sql[$index];
+
+            // --- Quoted literal (string or backtick identifier) ---
+            if ($ch === "'" || $ch === '"' || $ch === '`') {
+                $end   = self::scanQuotedLiteral($sql, $index, $ch);
+                $token = substr($sql, $index, $end - $index);
+
+                if ($ch === '`') {
+                    // Backtick-quoted identifier: pass through unchanged.
+                    $preparedSql .= $token;
+                } else {
+                    // Assumes default MySQL mode (ANSI_QUOTES off) for
+                    // double-quoted strings, where "..." is a string
+                    // literal, not a quoted identifier. Under ANSI_QUOTES,
+                    // double quotes mean identifiers instead - this branch
+                    // would need to move to the backtick case above.
+                    $values[] = self::decodeStringLiteral(substr($token, 1, -1), $ch);
+                    $preparedSql .= '?';
+                }
+
+                $index = $end;
+                continue;
+            }
+
             if (!preg_match($pattern, $sql, $m, PREG_UNMATCHED_AS_NULL, $index)) {
                 throw new Exception(sprintf(
                     'Unexpected input at byte offset %d near: %s',
@@ -55,31 +81,6 @@ REGEX;
 
             // --- Whitespace / comments: copy through verbatim ---
             if ($m['ws'] !== null || $m['linecomment'] !== null || $m['blockcomment'] !== null) {
-                $preparedSql .= $token;
-                $index += $tokenLen;
-                continue;
-            }
-
-            // --- Single-quoted string literal -> value ---
-            if ($m['sqstring'] !== null) {
-                $values[] = self::decodeStringLiteral(substr($token, 1, -1), "'");
-                $preparedSql .= '?';
-                $index += $tokenLen;
-                continue;
-            }
-
-            // --- Double-quoted string literal -> value ---
-            // Assumes default MySQL mode (ANSI_QUOTES off), where "..." is a
-            // string literal, not a quoted identifier.
-            if ($m['dqstring'] !== null) {
-                $values[] = self::decodeStringLiteral(substr($token, 1, -1), '"');
-                $preparedSql .= '?';
-                $index += $tokenLen;
-                continue;
-            }
-
-            // --- Backtick-quoted identifier: pass through unchanged ---
-            if ($m['backtick'] !== null) {
                 $preparedSql .= $token;
                 $index += $tokenLen;
                 continue;
@@ -169,6 +170,47 @@ REGEX;
             'sql'    => $preparedSql,
             'values' => $values,
         ];
+    }
+
+    /**
+     * Finds the end of a quoted literal (string or backtick identifier)
+     * starting at $sql[$start] (which must be $quoteChar), by scanning
+     * forward one byte at a time - no regex involved. Returns the index
+     * one past the closing quote. Handles both ways a quote character can
+     * appear inside the literal without ending it: a doubled quote ('' or
+     * ``) and a backslash-escaped character (\X, for any X) - the same two
+     * cases decodeStringLiteral() decodes afterward.
+     */
+    private static function scanQuotedLiteral(string $sql, int $start, string $quoteChar): int
+    {
+        $length = strlen($sql);
+        $i = $start + 1;
+
+        while ($i < $length) {
+            $ch = $sql[$i];
+
+            if ($ch === $quoteChar) {
+                if ($i + 1 < $length && $sql[$i + 1] === $quoteChar) {
+                    $i += 2; // doubled quote - still inside the literal
+                    continue;
+                }
+                return $i + 1; // the true closing quote
+            }
+
+            // Backslash escapes only apply inside '...' and "..." strings,
+            // not backtick identifiers (MySQL backtick-quoting only
+            // recognizes the doubled-backtick escape, not backslash).
+            if ($quoteChar !== '`' && $ch === '\\' && $i + 1 < $length) {
+                $i += 2;
+                continue;
+            }
+
+            $i++;
+        }
+
+        throw new RuntimeException(
+            'Unterminated string literal starting at byte offset ' . $start
+        );
     }
 
     /**
