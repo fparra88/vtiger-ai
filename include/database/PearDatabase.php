@@ -15,6 +15,7 @@
 
 require_once 'include/logging.php';
 require_once 'libraries/adodb_vtigerfix/adodb.inc.php';
+require_once 'include/database/PSqlConverter.php';
 
 $log = Logger::getLogger('VT');
 $logsqltm = Logger::getLogger('SQLTIME');
@@ -88,6 +89,10 @@ class PearDatabase{
     // If you want to avoid executing PreparedStatement, set this to true
     // PreparedStatement will be converted to normal SQL statement for execution
 	var $avoidPreparedSql = false;
+
+	// Force sql execution through PreparedStatement only. 
+	// Set to false when you are sure (not in production)
+	var $hardendedSql = true;
 
 	/**
 	 * Performance tunning parameters (can be configured through performance.prefs.php)
@@ -299,6 +304,11 @@ class PearDatabase{
 
     function query($sql, $dieOnError=false, $msg='')
     {
+
+	if ($this->hardendedSql) {
+		return $this->pquery($sql);
+	}
+
 	global $log, $default_charset;
 
 	$log->debug('query being executed : '.$sql);
@@ -316,6 +326,12 @@ class PearDatabase{
 	return $result;
     }
 
+	/**
+	 * Convert SQL to PreparedSQL return (sql, values)
+	 */
+	function convert2PSql($sql) {
+		return PSqlConverter::convert($sql);
+	}
 
 	/**
 	 * Convert PreparedStatement to SQL statement
@@ -358,6 +374,12 @@ class PearDatabase{
 		$this->executeSetNamesUTF8SQL();
 
 		$sql_start_time = microtime(true);
+
+		if ($this->hardendedSql && ($params == null || empty($params))) {
+			$rewrite = $this->convert2PSql($sql);
+			$sql = $rewrite["sql"];
+			$params = $rewrite["values"];
+		}
 
 		// flatten only when params has array inside.
 		$flatten_params = false;
