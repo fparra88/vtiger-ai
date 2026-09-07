@@ -10,7 +10,7 @@ final class PSqlConverter
     /**
      * @return array{sql: string, values: array<int, mixed>}
      */
-    public static function convert(string $sql): array
+    public static function convert(string $sql, bool $allowComments = false): array
     {
         // Delimiter is '~' (not '/') because the block-comment alternative
         // contains literal '/' characters, which would otherwise collide
@@ -37,10 +37,10 @@ final class PSqlConverter
 ~xs
 REGEX;
 
-        $index        = 0;
-        $length       = strlen($sql);
-        $values       = [];
-        $preparedSql  = '';
+        $index       = 0;
+        $length      = strlen($sql);
+        $values      = [];
+        $preparedSql = '';
         $sawSemicolon = false;
 
         while ($index < $length) {
@@ -79,8 +79,22 @@ REGEX;
             $token    = $m[0];
             $tokenLen = strlen($token);
 
-            // --- Whitespace / comments: copy through verbatim ---
-            if ($m['ws'] !== null || $m['linecomment'] !== null || $m['blockcomment'] !== null) {
+            // --- Whitespace: copy through verbatim ---
+            if ($m['ws'] !== null) {
+                $preparedSql .= $token;
+                $index += $tokenLen;
+                continue;
+            }
+
+            // --- Comments ---
+            if ($m['linecomment'] !== null || $m['blockcomment'] !== null) {
+                if (!$allowComments) {
+                    throw new Exception(sprintf(
+                        'Unexpected input at byte offset %d near: %s',
+                        $index,
+                        substr($sql, $index, 20)
+                    ));
+                }
                 $preparedSql .= $token;
                 $index += $tokenLen;
                 continue;
