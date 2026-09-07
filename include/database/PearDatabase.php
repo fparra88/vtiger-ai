@@ -209,8 +209,6 @@ class PearDatabase{
 	/* SQLTime logging */
 	protected $logSqlTimingID = false;
 	function logSqlTiming($startat, $endat, $sql, $params=false) {
-		// file_put_contents("logs/p.log", $this->convert2Sql($sql, $params)."\n", FILE_APPEND);
-
         if(!PerformancePrefs::getBoolean('SQL_LOG_INCLUDE_CALLER', false)) {
         	return;
         }
