@@ -12,7 +12,7 @@ class Vtiger_GuardedArray implements \ArrayAccess, \Iterator {
     private $data;
 
     function __construct($data = null) {
-        $this->data = is_null($data) || $data === false ? array() : $data;
+        $this->data = is_null($data) || $data === false || $data === '' ? array() : $data;
     }
 
     #[\ReturnTypeWillChange]
