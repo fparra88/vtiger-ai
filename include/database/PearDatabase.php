@@ -376,9 +376,14 @@ class PearDatabase{
 		$sql_start_time = microtime(true);
 
 		if ($this->hardendedSql && ($params == null || empty($params))) {
-			$rewrite = $this->convert2PSql($sql);
-			$sql = $rewrite["sql"];
-			$params = $rewrite["values"];
+			try {
+				$rewrite = $this->convert2PSql($sql);
+				$sql = $rewrite["sql"];
+				$params = $rewrite["values"];
+			} catch(Exception $e) {
+				// throw normalized error message.
+				throw new Exception("unexpected query syntax.");
+			}
 		}
 
 		// flatten only when params has array inside.
