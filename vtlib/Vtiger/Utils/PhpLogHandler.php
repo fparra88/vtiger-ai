@@ -54,7 +54,11 @@ class Vtiger_PhpLogHandler {
         return function($errno, $errstr, $errfile, $errline) use ($display_errors, $log_errors, $basedir, $logfile, $logctx, $reqtm) {
             // nothing todo return early.
             if (!$display_errors && !$log_errors && ($log_errors && !$logfile)) {
-                return;
+                return true;
+            }
+            // check at runtime (there could be override)
+            if (!(error_reporting() & $errno)) {
+                return true;
             }
 
             $errtype = $errno;
