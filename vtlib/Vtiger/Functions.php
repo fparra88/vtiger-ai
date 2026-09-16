@@ -1879,4 +1879,17 @@ class Vtiger_Functions {
 		}
 		return $row;
 	}
+
+	/**
+	 * Fix unbalanced [% or %Z] to [%% or %%Z] format specifier.
+	 */
+	static function	normalizePrintfFormat($format) {
+		return preg_replace_callback(
+			'/%(?:%|[-+0-9.\']*[bcdeEfFgGosuxX])|%/',
+			function ($m) {
+				return $m[0] === '%' ? '%%' : $m[0];
+			},
+			$format
+		);
+	}
 }

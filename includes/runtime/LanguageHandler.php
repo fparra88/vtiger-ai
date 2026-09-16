@@ -287,6 +287,9 @@ function vtranslate($key, $moduleName = '') {
 		array_shift($args); array_shift($args);
 	}
 	if(is_array($args) && !empty($args)) {
+		if (strpos($formattedString, '%') !== false) {
+			$formattedString = Vtiger_Functions::normalizePrintfFormat($formattedString);
+		}
 		$formattedString = call_user_func_array('vsprintf', array($formattedString, $args));
 	}
 	return $formattedString;
