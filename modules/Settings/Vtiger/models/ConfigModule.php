@@ -127,14 +127,16 @@ class Settings_Vtiger_ConfigModule_Model extends Settings_Vtiger_Module_Model {
                 }
 				$patternString = "\$%s = '%s';";
 				if ($fieldName === 'upload_maxsize') {
-					$fieldValue = $fieldValue * 1048576; //(1024 * 1024)
+					$fieldValue = intval($fieldValue) * 1048576; //(1024 * 1024)
 					$patternString = "\$%s = %s;";
-				}
-				if($fieldName==='list_max_entries_per_page' || $fieldName ==='listview_max_textlength'){
-					$fieldValue= intval($fieldValue);
+				} else if($fieldName==='list_max_entries_per_page' || $fieldName ==='listview_max_textlength'){
+					$fieldValue = intval($fieldValue);
+				} else {
+					// safe native serialization
+					$fieldValue = trim(var_export($fieldValue, true), "'");
 				}
 				$pattern = '/\$' . $fieldName . '[\s]+=([^;]+);/';
-				$replacement = sprintf($patternString, $fieldName, ltrim($fieldValue, '0'));
+				$replacement = sprintf($patternString, $fieldName, $fieldValue);
 				$fileContent = preg_replace($pattern, $replacement, $fileContent);
 			}
 			$filePointer = fopen($this->fileName, 'w');
