@@ -1892,4 +1892,147 @@ class Vtiger_Functions {
 			$format
 		);
 	}
+
+	/**
+	 * Replace PHP variable assignments.
+	 *
+	 * Supported examples:
+	 *   $name = 'old';
+	 *   $name= "old; value";
+	 *   $name = ['key' => 'value'];
+	 *   $name = SOME_CONSTANT;
+	 *
+	 * The replacement is serialized using var_export().
+	 *
+	 * @throws InvalidArgumentException
+	 * @throws RuntimeException
+	 */
+	static function replacePhpAssignments($source, $varValuesMap) {
+		if (empty($varValuesMap)) {
+			return $source;
+		}
+
+		// Validate requested variable names.
+		foreach ($varValuesMap as $name => $_value) {
+			if (!is_string($name) || !preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', $name)) {
+				throw new InvalidArgumentException('Invalid PHP variable name: ' . (string) $name);
+			}
+		}
+
+		$targets = array_fill_keys(
+			array_map(static fn($name) => '$' . $name, array_keys($varValuesMap)),
+			true
+		);
+
+		$tokens = token_get_all($source);
+
+		// Track each token's original byte offset.
+		$offsets = [];
+		$offset = 0;
+
+		foreach ($tokens as $i => $token) {
+			$text = is_array($token) ? $token[1] : $token;
+			$offsets[$i] = $offset;
+			$offset += strlen($text);
+		}
+
+		$trivia = [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT];
+
+		// Record assignment source spans and count definitions.
+		$assignments = [];
+		$counts = array_fill_keys(array_keys($varValuesMap), 0);
+
+		$count = count($tokens);
+
+		for ($i = 0; $i < $count; $i++) {
+			$token = $tokens[$i];
+
+			if (!is_array($token) || $token[0] !== T_VARIABLE || !isset($targets[$token[1]])) {
+				continue;
+			}
+
+			$name = substr($token[1], 1);
+
+			// Skip whitespace/comments between variable and "=".
+			$j = $i + 1;
+
+			while ($j < $count && is_array($tokens[$j]) && in_array($tokens[$j][0], $trivia, true)) {
+				$j++;
+			}
+
+			// Only direct assignments.
+			if ($j >= $count || $tokens[$j] !== '=') {
+				continue;
+			}
+
+			// Locate the terminating semicolon, accounting for nested delimiters.
+			$depth = 0;
+			$endIndex = null;
+
+			for ($k = $j + 1; $k < $count; $k++) {
+				$current = $tokens[$k];
+
+				if (is_array($current)) {
+					continue;
+				}
+
+				if ($current === '(' || $current === '[' || $current === '{') {
+					$depth++;
+				} elseif ($current === ')' || $current === ']' || $current === '}') {
+					$depth--;
+
+					if ($depth < 0) {
+						throw new RuntimeException(
+							"Unbalanced expression for \$$name"
+						);
+					}
+				} elseif ($current === ';' && $depth === 0) {
+					$endIndex = $k;
+					break;
+				}
+			}
+
+			if ($endIndex === null) {
+				throw new RuntimeException(
+					"Could not find assignment terminator for \$$name"
+				);
+			}
+
+			$counts[$name]++;
+
+			$assignments[] = [
+				'name' => $name,
+				'start' => $offsets[$i],
+				'end' => $offsets[$endIndex] + 1,
+			];
+
+			// Skip tokens within the assignment.
+			$i = $endIndex;
+		}
+
+		// Require exactly one assignment for each requested variable.
+		foreach ($counts as $name => $count) {
+			if ($count !== 1) {
+				throw new RuntimeException(sprintf('Expected exactly one direct assignment to $%s; found %d', $name, $count));
+			}
+		}
+
+		// Apply replacements from right to left so original offsets remain valid.
+		usort(
+			$assignments,
+			static fn($a, $b) => $b['start'] <=> $a['start']
+		);
+
+		foreach ($assignments as $assignment) {
+			$name = $assignment['name'];
+
+			$replacement = '$' . $name . ' = ' . var_export($varValuesMap[$name], true) . ';';
+
+			$source = substr_replace($source, $replacement, $assignment['start'],
+				$assignment['end'] - $assignment['start']
+			);
+		}
+
+		return $source;
+	}
 }

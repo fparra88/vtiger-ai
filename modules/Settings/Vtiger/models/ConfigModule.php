@@ -122,23 +122,23 @@ class Settings_Vtiger_ConfigModule_Model extends Settings_Vtiger_Module_Model {
         $editableFields = $this->getEditableFields();
 		if ($validationInfo === true) {
 			foreach ($updatedFields as $fieldName => $fieldValue) {
-                if(!in_array($fieldName, array_keys($editableFields))){
-                    continue;
-                }
-				$patternString = "\$%s = '%s';";
-				if ($fieldName === 'upload_maxsize') {
-					$fieldValue = intval($fieldValue) * 1048576; //(1024 * 1024)
-					$patternString = "\$%s = %s;";
-				} else if($fieldName==='list_max_entries_per_page' || $fieldName ==='listview_max_textlength'){
-					$fieldValue = intval($fieldValue);
-				} else {
-					// safe native serialization
-					$fieldValue = trim(var_export($fieldValue, true), "'");
+				if (!array_key_exists($fieldName, $editableFields)) {
+					continue;
 				}
-				$pattern = '/\$' . $fieldName . '[\s]+=([^;]+);/';
-				$replacement = sprintf($patternString, $fieldName, $fieldValue);
-				$fileContent = preg_replace($pattern, $replacement, $fileContent);
+				switch ($fieldName) {
+					case 'upload_maxsize':
+						$fieldValue = intval($fieldValue) * 1048576;
+						break;
+					case 'list_max_entries_per_page':
+					case 'listview_max_textlength':
+						$fieldValue = intval($fieldValue);
+						break;
+				}
+				$varValuesMap[$fieldName] = $fieldValue;
 			}
+
+			$fileContent = Vtiger_Functions::replacePhpAssignments($fileContent, $varValuesMap);
+			
 			$filePointer = fopen($this->fileName, 'w');
 			fwrite($filePointer, $fileContent);
 			fclose($filePointer);
