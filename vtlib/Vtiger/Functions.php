@@ -1894,6 +1894,21 @@ class Vtiger_Functions {
 	}
 
 	/**
+	 * Get only valid numerical values from the input array.
+	 */
+	static function getNumValues($array) {
+		$values = array();
+		if ($array != null && !empty($array)) {
+			foreach ($array as $val) {
+				if (is_numeric($val)) {
+					$values[] = $val;
+				}
+			}
+		}
+		return $values;
+	}
+
+	/**
 	 * Replace PHP variable assignments.
 	 *
 	 * Supported examples:

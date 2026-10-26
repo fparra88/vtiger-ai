@@ -78,7 +78,7 @@ class Portal_Module_Model extends Vtiger_Module_Model {
     public static function deleteRecords(Vtiger_Request $request) {
         $searchValue = $request->get('search_value');
         $selectedIds = $request->get('selected_ids');
-        $excludedIds = $request->get('excluded_ids');
+        $excludedIds = Vtiger_Functions::getNumValues($request->get('excluded_ids'));
         
         $db = PearDatabase::getInstance();
         

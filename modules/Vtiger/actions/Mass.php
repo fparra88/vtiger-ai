@@ -29,7 +29,7 @@ abstract class Vtiger_Mass_Action extends Vtiger_Action_Controller {
 
 		if(!empty($selectedIds) && $selectedIds != 'all') {
 			if(!empty($selectedIds) && php7_count($selectedIds) > 0) {
-				return $selectedIds;
+				return Vtiger_Functions::getNumValues($selectedIds);
 			}
 		}
         $tagParams = $request->get('tag_params');

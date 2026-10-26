@@ -206,7 +206,7 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 													$query .= ' AND '.$baseTable.'.'.$baseTableColumnId.' IN ('.$idList.')';
 												}
 											} else {
-												$query .= ' AND '.$baseTable.'.'.$baseTableColumnId.' NOT IN ('.implode(',',$request->get('excluded_ids')).')';
+												$query .= ' AND '.$baseTable.'.'.$baseTableColumnId.' NOT IN ('.implode(',', Vtiger_Functions::getNumValues($request->get('excluded_ids'))).')';
 											}
 
 											if ($orderBy && $orderByFieldModel) {

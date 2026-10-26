@@ -415,7 +415,7 @@ class Vtiger_MassActionAjax_View extends Vtiger_IndexAjax_View {
         }
 		if(!empty($selectedIds) && $selectedIds != 'all') {
 			if(!empty($selectedIds) && php7_count($selectedIds) > 0) {
-				return $selectedIds;
+				return Vtiger_Functions::getNumValues($selectedIds);
 			}
 		}
         $tagParams = $request->get('tag_params');
