@@ -888,10 +888,13 @@ class Vtiger_Util_Helper {
 
 	/*
 	 * Function to escape string for sql query.
-	 * It returns string with escaped _ and %
+	 * It returns string with escaped _ and % when $wildcard is true.
 	 */
-	public static function escapeSqlString($string) {
-		return str_replace(array('\\','_', '%'), array('\\\\','\_', '\%'), $string);
+	public static function escapeSqlString($string, $wildcard=false) {
+		if ($wildcard) {
+			$string = str_replace(array('\\','_', '%'), array('\\\\','\_', '\%'), $string);
+		}
+		return PearDatabase::getInstance()->sql_escape_string($string);
 	}
 
 	public static function GetDirectorySize($path) {

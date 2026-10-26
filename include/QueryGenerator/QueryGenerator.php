@@ -247,6 +247,7 @@ class QueryGenerator {
 			if(php7_count($filtercolumns) > 0) {
 				$this->startGroup('');
 				foreach ($filtercolumns as $index=>$filter) {
+					$filter['value'] = Vtiger_Util_Helper::escapeSqlString($filter['value'], in_array($filter['comparator'], array('e', 'n')));
 					$nameComponents = explode(':',$filter['columnname']);
 					// For Events "End Date & Time" field datatype should be DT. But, db will give D for due_date field
 					if($nameComponents[2] == 'due_date' && $nameComponents[3] == 'Events_End_Date_&_Time')
