@@ -1619,7 +1619,7 @@ class ReportRun extends CRMEntity {
 
 				$adv_filter_column = $column_condition["columnname"];
 				$adv_filter_comparator = $column_condition["comparator"];
-				$adv_filter_value = $column_condition["value"];
+				$adv_filter_value = Vtiger_Util_Helper::escapeSqlString($column_condition["value"], in_array($adv_filter_comparator, array('e', 'n')));
 				$adv_filter_column_condition = $column_condition["columncondition"];
 				$adv_filter_groupid = $column_condition["groupid"];
 
