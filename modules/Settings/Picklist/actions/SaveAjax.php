@@ -93,7 +93,7 @@ class Settings_Picklist_SaveAjax_Action extends Settings_Vtiger_Basic_Action {
 			$newValuesArray = explode(',', $newValues);
 			$result = array();
 			foreach($newValuesArray as $i => $newValue) {
-				$id = $moduleModel->addPickListValues($fieldModel, trim($newValue), $rolesSelected, $selectedColor);
+				$id = $moduleModel->addPickListValues($fieldModel, vtlib_purify(trim($newValue)), $rolesSelected, $selectedColor);
 				$result['id'.$i] = $id['id'];
 			}
             $moduleModel->handleLabels($moduleName, $newValuesArray, array(), 'add');
@@ -107,7 +107,7 @@ class Settings_Picklist_SaveAjax_Action extends Settings_Vtiger_Basic_Action {
     public function rename(Vtiger_Request $request) {
         $moduleName = $request->get('source_module');
         
-        $newValue = $request->getRaw('newValue');
+        $newValue = vtlib_purify($request->getRaw('newValue'));
         $pickListFieldName = $request->get('picklistName');
         
         // we should clear cache to update with latest values
@@ -135,7 +135,7 @@ class Settings_Picklist_SaveAjax_Action extends Settings_Vtiger_Basic_Action {
     public function remove(Vtiger_Request $request) {
         $moduleName = $request->get('source_module');
         $valueToDelete = $request->getRaw('delete_value');
-        $replaceValue = $request->getRaw('replace_value');
+        $replaceValue = vtlib_purify($request->getRaw('replace_value'));
         $pickListFieldName = $request->get('picklistName');
         $moduleModel = Settings_Picklist_Module_Model::getInstance($moduleName);
         $pickListDeleteValue = $moduleModel->getActualPicklistValues($valueToDelete,$pickListFieldName);
@@ -233,7 +233,7 @@ class Settings_Picklist_SaveAjax_Action extends Settings_Vtiger_Basic_Action {
     public function edit(Vtiger_Request $request) {
         $moduleName = $request->get('source_module');
         
-        $newValue = $request->getRaw('newValue');
+        $newValue = vtlib_purify($request->getRaw('newValue'));
         $pickListFieldName = $request->get('picklistName');
         $nonEditablePicklistValues = Settings_Picklist_Field_Model::getNonEditablePicklistValues($pickListFieldName);
         
