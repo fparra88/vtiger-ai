@@ -334,7 +334,7 @@ class Vtiger_MailScannerAction {
 		$this->setDefaultValue('HelpDesk', $ticket);
 		if(empty($ticket->column_fields['ticketstatus']) || $ticket->column_fields['ticketstatus'] == '?????')
 			$ticket->column_fields['ticketstatus'] = 'Open';
-		$ticket->column_fields['ticket_title'] = $usetitle;
+		$ticket->column_fields['ticket_title'] = vtlib_purify($usetitle);
 		$ticket->column_fields['description'] = $description;
 		$ticket->column_fields['assigned_user_id'] = $mailscannerrule->assigned_to;
 		if ($contactLinktoid)
@@ -438,9 +438,9 @@ class Vtiger_MailScannerAction {
 		$focus->column_fields['parent_type'] = $module;
 		$focus->column_fields['activitytype'] = 'Emails';
 		$focus->column_fields['parent_id'] = "$linkfocus->id@-1|";
-		$focus->column_fields['subject'] = $mailrecord->_subject;
+		$focus->column_fields['subject'] = vtlib_purify($mailrecord->_subject);
 
-		$focus->column_fields['description'] = $mailrecord->getBodyHTML();
+		$focus->column_fields['description'] = vtlib_purify($mailrecord->getBodyHTML());
 		$focus->column_fields['assigned_user_id'] = $assignedToId;
 		$focus->column_fields["date_start"] = date('Y-m-d', $mailrecord->_date);
 		$focus->column_fields["time_start"] = date('H:i:s', $mailrecord->_date);
