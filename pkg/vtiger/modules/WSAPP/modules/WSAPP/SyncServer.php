@@ -40,10 +40,12 @@ class SyncServer {
 	 */
 	function idmap_get_clientmap($appid, $serverids) {
 		if (!is_array($serverids)) $serverids = array($serverids);
+
+		$params = array($appid);
+		foreach ($serverids as $sid) $params[] = $sid;
+
 		$db = PearDatabase::getInstance(); 		;
-		$result = $db->pquery(sprintf(
-			"SELECT serverid, clientid,clientmodifiedtime,servermodifiedtime,id FROM vtiger_wsapp_recordmapping WHERE appid=? AND serverid IN ('%s')",
-			implode("','", $serverids)), array($appid));
+		$result = $db->pquery("SELECT serverid, clientid,clientmodifiedtime,servermodifiedtime,id FROM vtiger_wsapp_recordmapping WHERE appid=? AND serverid IN (". generateQuestionMarks($serverids) . ")" , $params);
 
 		$mapping = array();
 		if ($db->num_rows($result)) {
@@ -64,9 +66,10 @@ class SyncServer {
 
 		$db = PearDatabase::getInstance();
 
-		$result = $db->pquery(sprintf(
-		"SELECT serverid, clientid FROM vtiger_wsapp_recordmapping WHERE appid=? AND clientid IN ('%s')",
-		implode("','", $clientids)), array($appid));
+		$params = array($appid);
+		foreach ($clientids as $cid) $params[] = $cid;
+
+		$result = $db->pquery("SELECT serverid, clientid FROM vtiger_wsapp_recordmapping WHERE appid=? AND clientid IN (". generateQuestionMarks($clientids) .")", $params);
 		$mapping = array();
 		if($db->num_rows($result)){
 			while($row = $db->fetch_array($result)){
