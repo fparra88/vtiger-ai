@@ -876,6 +876,7 @@ class Reports extends CRMEntity{
 		$sSQL = "select vtiger_reportdatefilter.* from vtiger_reportdatefilter inner join vtiger_report on vtiger_report.reportid = vtiger_reportdatefilter.datefilterid where vtiger_report.reportid=?";
 		$result = $adb->pquery($sSQL, array($reportid));
 		$selectedstdfilter = $adb->fetch_array($result);
+		Vtiger_Functions::validateFilterColumnValue($selectedstdfilter, 'datecolumnname');
 
 		$this->stdselectedcolumn = $selectedstdfilter["datecolumnname"];
 		$this->stdselectedfilter = $selectedstdfilter["datefilter"];
@@ -1363,6 +1364,7 @@ function getEscapedColumns($selectedfields)
 		for($i=0; $i<$noofrows; $i++)
 		{
 			$fieldcolname = $adb->query_result($result,$i,"columnname");
+			Vtiger_Functions::validateFilterColumnValue($fieldcolname);
 			$sort_values = $adb->query_result($result,$i,"sortorder");
 			$this->ascdescorder[] = $sort_values;
 			$array_list[] = $fieldcolname;
@@ -1399,6 +1401,7 @@ function getEscapedColumns($selectedfields)
 		{
 			$fieldname ="";
 			$fieldcolname = $columnslistrow["columnname"];
+			Vtiger_Functions::validateFilterColumnValue($fieldcolname);
 
 			$selmod_field_disabled = true;
 			foreach($selected_mod as $smod){

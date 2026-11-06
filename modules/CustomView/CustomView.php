@@ -435,6 +435,7 @@ class CustomView extends CRMEntity {
 			$result = $adb->pquery($sSQL, array($cvid));
 			$columnlist = array();
 			while ($columnrow = $adb->fetch_array($result)) {
+				Vtiger_Functions::validateFilterColumnValue($columnrow);
 				$columnlist[$columnrow['columnindex']] = $columnrow['columnname'];
 			}
 			Vtiger_Cache::set("cvColumnListByCvid",$cvid, $columnlist);
@@ -866,6 +867,7 @@ class CustomView extends CRMEntity {
 
 			$result = $adb->pquery($sSQL, array($cvid));
 			$data = $adb->fetch_array($result);
+			Vtiger_Functions::validateFilterColumnValue($data);
 			$stdfilterrow = $data ? $data : null ;
 			Vtiger_Cache::set("cvStdFilterById",$cvid,$stdfilterrow);
 		}
@@ -1153,6 +1155,7 @@ class CustomView extends CRMEntity {
 
 		$result = $adb->pquery($sSQL, array($cvid));
 		$stdfilterrow = $adb->fetch_array($result);
+		Vtiger_Functions::validateFilterColumnValue($stdfilterrow);
 
 		$stdfilterlist = array();
 		$stdfilterlist["columnname"] = $stdfilterrow["columnname"];

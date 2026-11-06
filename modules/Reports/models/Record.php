@@ -329,6 +329,7 @@ class Reports_Record_Model extends Vtiger_Record_Model {
 		$primaryModule = $this->report->primodule;
 		for($i=0; $i<$db->num_rows($result); $i++) {
 			$column = $db->query_result($result, $i, 'columnname');
+			Vtiger_Functions::validateFilterColumnValue($column);
 			list($tableName, $columnName, $moduleFieldLabel, $fieldName, $type) = explode(':', $column);
 			$fieldLabel  = explode('_', $moduleFieldLabel);
 			$module = $fieldLabel[0];
@@ -384,6 +385,7 @@ class Reports_Record_Model extends Vtiger_Record_Model {
 		$sortColumns = array();
 		for($i=0; $i<$db->num_rows($result); $i++) {
 			$column = $db->query_result($result, $i, 'columnname');
+			Vtiger_Functions::validateFilterColumnValue($column);
 			$order = $db->query_result($result, $i, 'sortorder');
 			$sortColumns[decode_html($column)] = $order;
 		}
@@ -405,6 +407,7 @@ class Reports_Record_Model extends Vtiger_Record_Model {
 			$standardFieldInfo['type'] = $db->query_result($result, 0, 'datefilter');
 			$standardFieldInfo['startdate'] = $db->query_result($result, 0, 'startdate');
 			$standardFieldInfo['enddate'] = $db->query_result($result, 0, 'enddate');
+			Vtiger_Functions::validateFilterColumnValue($standardFieldInfo);
 
 			if ($standardFieldInfo['type'] == "custom" || $standardFieldInfo['type'] == "") {
 				if ($standardFieldInfo["startdate"] != "0000-00-00" && $standardFieldInfo["startdate"] != "") {

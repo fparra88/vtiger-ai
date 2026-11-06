@@ -1666,6 +1666,16 @@ class Vtiger_Functions {
         return filter_var($value, FILTER_VALIDATE_FLOAT) !== false;
     }
 
+	public static function validateFilterColumnValue($mixed, $key = "columnname") {
+		$value = is_array($mixed) ? $mixed[$key] : $mixed;
+		if ($value) {
+			$parts = explode(":", $value); /* table:column:field:... */
+			if (!vtlib_purifyForSql($parts[0]) || !vtlib_purifyForSql($parts[1])) {
+				throw new Exception("unexpected data value");
+			}
+		}
+	}
+
     /**
 	 * Function to get file public url to access outside of CRM (from emails)
 	 * @param <Integer> $fileId

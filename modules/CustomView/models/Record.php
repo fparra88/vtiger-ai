@@ -541,6 +541,7 @@ class CustomView_Record_Model extends Vtiger_Base_Model {
 		for($i=0; $i<$noOfFields; ++$i) {
 			$columnIndex = $db->query_result($result, $i, 'columnindex');
 			$columnName = $db->query_result($result, $i, 'columnname');
+			Vtiger_Functions::validateFilterColumnValue($columnName);
 			$selectedFields[$columnIndex] = decode_html($columnName);
 		}
 		return $selectedFields;
@@ -565,6 +566,7 @@ class CustomView_Record_Model extends Vtiger_Base_Model {
 		$result = $db->pquery($query, $params);
 		$stdfilterrow = $db->fetch_array($result);
 		if(!empty($stdfilterrow)){
+			Vtiger_Functions::validateFilterColumnValue($stdfilterrow);
 			$stdfilterlist = array();
 			$stdfilterlist["columnname"] = $stdfilterrow["columnname"];
 			$stdfilterlist["stdfilter"] = $stdfilterrow["stdfilter"];
@@ -624,6 +626,7 @@ class CustomView_Record_Model extends Vtiger_Base_Model {
 				continue;
 
 			while ($relcriteriarow = $db->fetch_array($result)) {
+				Vtiger_Functions::validateFilterColumnValue($relcriteriarow);
 				$criteria = array();
 				$criteria['columnname'] = html_entity_decode($relcriteriarow["columnname"], ENT_QUOTES, $default_charset);
 				$criteria['comparator'] = $relcriteriarow["comparator"];

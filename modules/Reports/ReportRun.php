@@ -378,6 +378,7 @@ class ReportRun extends CRMEntity {
         $selectedModuleFields = array();
         require('user_privileges/user_privileges_'.$current_user->id.'.php');
 		while ($columnslistrow = $adb->fetch_array($result)) {
+			Vtiger_Functions::validateFilterColumnValue($columnslistrow);
 			$fieldname = "";
 			$fieldcolname = isset($columnslistrow["columnname"]) ? $columnslistrow["columnname"] : '';
 			if ($fieldcolname != null && substr_count($fieldcolname, ':') >= 4) {
@@ -792,6 +793,7 @@ class ReportRun extends CRMEntity {
 
 		for ($i = 0; $i < $noofrows; $i++) {
 			$fieldcolname = $adb->query_result($result, $i, "columnname");
+			Vtiger_Functions::validateFilterColumnValue($fieldcolname);
 			$ordercolumnsequal = true;
 			if ($fieldcolname != "") {
 				for ($j = 0; $j < php7_count($this->orderbylistcolumns); $j++) {
@@ -1505,6 +1507,7 @@ class ReportRun extends CRMEntity {
 		$result = $adb->pquery($stdfiltersql, array($reportid));
 		$stdfilterrow = $adb->fetch_array($result);
 		if (isset($stdfilterrow)) {
+			Vtiger_Functions::validateFilterColumnValue($stdfilterrow, "datecolumnname");
 			$fieldcolname = $stdfilterrow["datecolumnname"];
 			$datefilter = $stdfilterrow["datefilter"];
 			$startdate = $stdfilterrow["startdate"];
@@ -1712,6 +1715,8 @@ class ReportRun extends CRMEntity {
 
 		for ($i = 0; $i < $noofrows; $i++) {
 			$fieldcolname = $adb->query_result($result, $i, "datecolumnname");
+			Vtiger_Functions::validateFilterColumnValue($fieldcolname);
+
 			$datefilter = $adb->query_result($result, $i, "datefilter");
 			$startdate = $adb->query_result($result, $i, "startdate");
 			$enddate = $adb->query_result($result, $i, "enddate");
@@ -1997,6 +2002,7 @@ class ReportRun extends CRMEntity {
 		$inventoryModules = getInventoryModules();
 		while ($reportsortrow = $adb->fetch_array($result)) {
 			$fieldcolname = $reportsortrow["columnname"];
+			Vtiger_Functions::validateFilterColumnValue($fieldcolname);
 			list($tablename, $colname, $module_field, $fieldname, $single) = explode(':', $fieldcolname);
 			$sortorder = $reportsortrow["sortorder"];
 
@@ -2095,12 +2101,15 @@ class ReportRun extends CRMEntity {
 
 		for ($i = 0; $i < $noofrows; $i++) {
 			$fieldcolname = $adb->query_result($result, $i, "columnname");
+			Vtiger_Functions::validateFilterColumnValue($fieldcolname);
 			$sortorder = $adb->query_result($result, $i, "sortorder");
 
 			if ($sortorder == "Ascending") {
 				$sortorder = "ASC";
 			} elseif ($sortorder == "Descending") {
 				$sortorder = "DESC";
+			} else {
+				$sortorder = "ASC";
 			}
 
 			if ($fieldcolname != "none") {
@@ -4796,6 +4805,7 @@ class ReportRun extends CRMEntity {
 		$inventoryModules = getInventoryModules();
 		if ($adb->num_rows($sortFieldResult) > 0) {
 			$fieldcolname = $adb->query_result($sortFieldResult, 0, 'columnname');
+			Vtiger_Functions::validateFilterColumnValue($fieldcolname);
 			list($tablename, $colname, $module_field, $fieldname, $typeOfData) = explode(":", $fieldcolname);
 			list($modulename, $fieldlabel) = explode('_', $module_field, 2);
 			$groupByField = $module_field;
