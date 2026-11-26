@@ -1,0 +1,138 @@
+<?php
+/*+***********************************************************************************
+ * WhatsAppNotifier predefined cron - sends a WhatsApp re-engagement template to
+ * Contacts with no related activity for longer than the configured threshold
+ * (Settings > WhatsApp Cron Jobs, days_threshold).
+ *
+ * "Activity" = the most recent of: the Contact record's own modifiedtime, any
+ * related HelpDesk ticket (vtiger_troubletickets.parent_id), and any related
+ * Call/Email (vtiger_crmentityrel, the generic related-list join table vtiger
+ * uses for module-to-module relations). Computed as 3 separate queries merged in
+ * PHP rather than one large join, to keep each query simple/indexable.
+ *
+ * Dedup: a Contact is only notified once per "silence episode" - if it was
+ * already notified after its last known activity, it is skipped until it has a
+ * new activity and then goes quiet again.
+ *
+ * Invoked by vtigercron.php via require_once; self-bootstraps per other cron
+ * handlers' convention (see cron/modules/AIAssistant/aiassistant.service).
+ *************************************************************************************/
+
+require_once 'include/database/PearDatabase.php';
+require_once 'vtlib/Vtiger/Utils.php';
+require_once 'vtlib/Vtiger/Functions.php';
+require_once 'modules/WhatsAppNotifier/WhatsAppNotifierSetup.php';
+require_once 'modules/WhatsAppNotifier/CronJobConfig.php';
+require_once 'modules/WhatsAppNotifier/providers/MetaCloudAPIProvider.php';
+
+function whatsapp_inactive_contact_run() {
+	$adb = PearDatabase::getInstance();
+
+	$config = WhatsAppNotifier_CronJobConfig_Model::getActiveConfig('inactive_contact');
+	if (!$config || empty($config['days_threshold'])) {
+		echo "[WhatsApp Inactive Contact Reminder] Disabled, no template, or no days_threshold configured in Settings > WhatsApp Cron Jobs. Skipping.\n";
+		return;
+	}
+	$thresholdDays = intval($config['days_threshold']);
+
+	try {
+		$provider = WhatsAppNotifier_MetaCloudAPIProvider_Model::getInstance();
+	} catch (Exception $e) {
+		echo '[WhatsApp Inactive Contact Reminder] Cannot start: ' . $e->getMessage() . "\n";
+		return;
+	}
+
+	// Base candidates: active Contacts with a usable WhatsApp number.
+	$contacts = array();
+	$result = $adb->pquery(
+		"SELECT cd.contactid, cd.firstname, cd.lastname, cd.mobile, cd.phone, ce.modifiedtime
+			FROM vtiger_contactdetails cd
+			INNER JOIN vtiger_crmentity ce ON ce.crmid = cd.contactid AND ce.deleted = 0
+			WHERE (cd.mobile IS NOT NULL AND cd.mobile != '') OR (cd.phone IS NOT NULL AND cd.phone != '')",
+		array()
+	);
+	while ($row = $adb->fetch_array($result)) {
+		$contacts[$row['contactid']] = array(
+			'firstname' => $row['firstname'],
+			'lastname' => $row['lastname'],
+			'mobile' => $row['mobile'],
+			'phone' => $row['phone'],
+			'lastactivity' => strtotime($row['modifiedtime']),
+		);
+	}
+	if (empty($contacts)) {
+		echo "[WhatsApp Inactive Contact Reminder] No candidate contacts with a phone number.\n";
+		return;
+	}
+
+	// Last related HelpDesk ticket activity per contact.
+	$ticketResult = $adb->pquery(
+		"SELECT tt.parent_id AS contactid, MAX(ce.modifiedtime) AS lastactivity
+			FROM vtiger_troubletickets tt
+			INNER JOIN vtiger_crmentity ce ON ce.crmid = tt.ticketid AND ce.deleted = 0
+			WHERE tt.parent_id IN (" . generateQuestionMarks(array_keys($contacts)) . ")
+			GROUP BY tt.parent_id",
+		array_keys($contacts)
+	);
+	while ($row = $adb->fetch_array($ticketResult)) {
+		$contactId = $row['contactid'];
+		if (isset($contacts[$contactId])) {
+			$contacts[$contactId]['lastactivity'] = max($contacts[$contactId]['lastactivity'], strtotime($row['lastactivity']));
+		}
+	}
+
+	// Last related Call/Email activity per contact, via the generic relation table.
+	// Relations in vtiger_crmentityrel can be stored in either direction, so check both.
+	$relResult = $adb->pquery(
+		"SELECT cer.crmid AS contactid, MAX(rel_ce.modifiedtime) AS lastactivity
+			FROM vtiger_crmentityrel cer
+			INNER JOIN vtiger_crmentity rel_ce ON rel_ce.crmid = cer.relcrmid AND rel_ce.deleted = 0
+			WHERE cer.relmodule IN ('Calls', 'Emails') AND cer.crmid IN (" . generateQuestionMarks(array_keys($contacts)) . ")
+			GROUP BY cer.crmid
+			UNION ALL
+			SELECT cer.relcrmid AS contactid, MAX(rel_ce.modifiedtime) AS lastactivity
+			FROM vtiger_crmentityrel cer
+			INNER JOIN vtiger_crmentity rel_ce ON rel_ce.crmid = cer.crmid AND rel_ce.deleted = 0
+			WHERE cer.module IN ('Calls', 'Emails') AND cer.relcrmid IN (" . generateQuestionMarks(array_keys($contacts)) . ")
+			GROUP BY cer.relcrmid",
+		array_merge(array_keys($contacts), array_keys($contacts))
+	);
+	while ($row = $adb->fetch_array($relResult)) {
+		$contactId = $row['contactid'];
+		if (isset($contacts[$contactId])) {
+			$contacts[$contactId]['lastactivity'] = max($contacts[$contactId]['lastactivity'], strtotime($row['lastactivity']));
+		}
+	}
+
+	$now = time();
+	$thresholdSeconds = $thresholdDays * 86400;
+
+	$sent = 0;
+	$skipped = 0;
+	foreach ($contacts as $contactId => $contact) {
+		if (($now - $contact['lastactivity']) < $thresholdSeconds) {
+			continue;
+		}
+
+		$toNumber = preg_replace('/[^0-9]/', '', $contact['mobile'] ?: $contact['phone']);
+		if (empty($toNumber)) {
+			$skipped++;
+			continue;
+		}
+
+		$sinceDateTime = date('Y-m-d H:i:s', $contact['lastactivity']);
+		if (WhatsAppNotifier_CronJobConfig_Model::wasAlreadyNotifiedSince('Contacts', $contactId, $config['template_name'], $sinceDateTime)) {
+			$skipped++;
+			continue;
+		}
+
+		$contactName = trim($contact['firstname'] . ' ' . $contact['lastname']);
+		$daysInactive = (string) floor(($now - $contact['lastactivity']) / 86400);
+		$provider->sendTemplate($toNumber, $config['template_name'], array($contactName, $daysInactive), $config['language_code'], $contactId, 'Contacts');
+		$sent++;
+	}
+
+	echo "[WhatsApp Inactive Contact Reminder] Sent: $sent, Skipped: $skipped\n";
+}
+
+whatsapp_inactive_contact_run();

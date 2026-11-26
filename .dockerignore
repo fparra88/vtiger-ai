@@ -1,0 +1,10 @@
+.git
+.gitignore
+.claude
+vendor
+node_modules
+cache/*
+!cache/.htaccess
+logs/*
+!logs/.htaccess
+*.md

@@ -1,0 +1,103 @@
+<?php
+/*+***********************************************************************************
+ * AIAssistant cron handler - scores unscored Leads/HelpDesk records using the
+ * configured OpenAI model. Invoked by vtigercron.php via require_once, which
+ * means it runs in that script's top-level scope (globals like $adb, if already
+ * defined, are available) - but per other cron handlers' convention (see
+ * cron/modules/com_vtiger_workflow/com_vtiger_workflow.service) each handler
+ * self-bootstraps whatever it needs rather than assuming prior state.
+ *
+ * Admin-configurable via:
+ *  - Settings > AI Assistant: enable_scoring toggle, scoring_modules, scoring_batch_size
+ *  - Settings > CRON Tasks: enable/disable this task and its run frequency
+ *************************************************************************************/
+
+require_once 'include/database/PearDatabase.php';
+require_once 'vtlib/Vtiger/Utils.php';
+require_once 'vtlib/Vtiger/Functions.php';
+require_once 'modules/AIAssistant/providers/OpenAIProvider.php';
+
+function aiassistant_run_scoring() {
+	$adb = PearDatabase::getInstance();
+
+	$config = AIAssistant_OpenAIProvider_Model::getRawConfig();
+	if (!$config || empty($config['enable_scoring'])) {
+		echo "[AIAssistant] Lead/Case scoring is disabled in Settings > AI Assistant. Skipping.\n";
+		return;
+	}
+
+	// module => [detail table, primary key column]. ai_score/ai_score_reason
+	// columns live directly on these tables (added via setup_ai_scoring_fields.php).
+	$moduleTableMap = array(
+		'Leads' => array('table' => 'vtiger_leaddetails', 'idcol' => 'leadid'),
+		'HelpDesk' => array('table' => 'vtiger_troubletickets', 'idcol' => 'ticketid'),
+	);
+
+	$modules = array_filter(array_map('trim', explode(',', (string) $config['scoring_modules'])));
+	if (empty($modules)) {
+		echo "[AIAssistant] No scoring modules configured in Settings > AI Assistant. Skipping.\n";
+		return;
+	}
+
+	$batchSize = max(1, intval($config['scoring_batch_size']));
+
+	try {
+		$provider = AIAssistant_OpenAIProvider_Model::getInstance();
+	} catch (Exception $e) {
+		echo "[AIAssistant] Cannot start scoring: " . $e->getMessage() . "\n";
+		return;
+	}
+
+	foreach ($modules as $moduleName) {
+		if (!isset($moduleTableMap[$moduleName])) {
+			echo "[AIAssistant] Unsupported scoring module '$moduleName' - skipping.\n";
+			continue;
+		}
+		$table = $moduleTableMap[$moduleName]['table'];
+		$idCol = $moduleTableMap[$moduleName]['idcol'];
+
+		$result = $adb->pquery(
+			"SELECT ce.crmid, ce.label FROM vtiger_crmentity ce
+			 INNER JOIN $table dt ON dt.$idCol = ce.crmid
+			 WHERE ce.deleted = 0 AND ce.setype = ? AND dt.ai_score IS NULL
+			 LIMIT ?",
+			array($moduleName, $batchSize)
+		);
+
+		$numRows = $result ? $adb->num_rows($result) : 0;
+		echo "[AIAssistant] $moduleName: found $numRows unscored record(s) (batch limit $batchSize)\n";
+
+		for ($i = 0; $i < $numRows; $i++) {
+			$row = $adb->query_result_rowdata($result, $i);
+			$crmid = $row['crmid'];
+			$label = $row['label'];
+
+			try {
+				$reply = $provider->chat(array(
+					array(
+						'role' => 'system',
+						'content' => 'You score CRM ' . $moduleName . ' records for sales/support priority. '
+							. 'Reply with ONLY strict JSON of the form {"score": <integer 0-100>, "reason": "<short reason, max 150 chars>"}. '
+							. 'No other text.',
+					),
+					array('role' => 'user', 'content' => 'Record name/subject: ' . $label),
+				));
+
+				$decoded = json_decode(trim($reply), true);
+				if (!is_array($decoded) || !isset($decoded['score']) || !is_numeric($decoded['score'])) {
+					throw new Exception('Malformed AI response: ' . substr((string) $reply, 0, 200));
+				}
+
+				$score = max(0, min(100, intval($decoded['score'])));
+				$reason = isset($decoded['reason']) ? substr((string) $decoded['reason'], 0, 500) : '';
+
+				$adb->pquery("UPDATE $table SET ai_score = ?, ai_score_reason = ? WHERE $idCol = ?", array($score, $reason, $crmid));
+				echo "[AIAssistant] Scored $moduleName #$crmid -> $score ($reason)\n";
+			} catch (Exception $e) {
+				echo "[AIAssistant] Failed to score $moduleName #$crmid: " . $e->getMessage() . "\n";
+			}
+		}
+	}
+}
+
+aiassistant_run_scoring();

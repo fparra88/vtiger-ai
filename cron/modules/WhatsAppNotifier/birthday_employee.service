@@ -1,0 +1,74 @@
+<?php
+/*+***********************************************************************************
+ * WhatsAppNotifier predefined cron - sends a WhatsApp birthday template to every
+ * active CRM user (employee) whose birthday (month+day) is today. Requires the
+ * 'birthday' column added to vtiger_users by setup_whatsapp_cron_jobs.php - until
+ * that has been run, this handler finds no candidates (missing column is treated
+ * as "no one configured a birthday yet", not an error).
+ *
+ * Invoked by vtigercron.php via require_once; self-bootstraps per other cron
+ * handlers' convention (see cron/modules/AIAssistant/aiassistant.service).
+ * Admin-configurable via Settings > WhatsApp Cron Jobs (enable/template/language).
+ *************************************************************************************/
+
+require_once 'include/database/PearDatabase.php';
+require_once 'vtlib/Vtiger/Utils.php';
+require_once 'vtlib/Vtiger/Functions.php';
+require_once 'modules/WhatsAppNotifier/WhatsAppNotifierSetup.php';
+require_once 'modules/WhatsAppNotifier/CronJobConfig.php';
+require_once 'modules/WhatsAppNotifier/providers/MetaCloudAPIProvider.php';
+
+function whatsapp_birthday_employee_run() {
+	$adb = PearDatabase::getInstance();
+
+	$config = WhatsAppNotifier_CronJobConfig_Model::getActiveConfig('birthday_employee');
+	if (!$config) {
+		echo "[WhatsApp Birthday - Employees] Disabled or no template configured in Settings > WhatsApp Cron Jobs. Skipping.\n";
+		return;
+	}
+
+	if (!in_array('birthday', $adb->getColumnNames('vtiger_users'))) {
+		echo "[WhatsApp Birthday - Employees] vtiger_users.birthday column not found - run setup_whatsapp_cron_jobs.php first. Skipping.\n";
+		return;
+	}
+
+	try {
+		$provider = WhatsAppNotifier_MetaCloudAPIProvider_Model::getInstance();
+	} catch (Exception $e) {
+		echo '[WhatsApp Birthday - Employees] Cannot start: ' . $e->getMessage() . "\n";
+		return;
+	}
+
+	$todayMonthDay = date('m-d');
+	$startOfToday = date('Y-m-d 00:00:00');
+
+	$result = $adb->pquery(
+		"SELECT id, first_name, last_name, phone_mobile
+			FROM vtiger_users
+			WHERE deleted = 0 AND status = 'Active' AND birthday IS NOT NULL AND DATE_FORMAT(birthday, '%m-%d') = ?",
+		array($todayMonthDay)
+	);
+
+	$sent = 0;
+	$skipped = 0;
+	while ($row = $adb->fetch_array($result)) {
+		$toNumber = preg_replace('/[^0-9]/', '', $row['phone_mobile']);
+		if (empty($toNumber)) {
+			$skipped++;
+			continue;
+		}
+
+		if (WhatsAppNotifier_CronJobConfig_Model::wasAlreadyNotifiedSince('Users', $row['id'], $config['template_name'], $startOfToday)) {
+			$skipped++;
+			continue;
+		}
+
+		$employeeName = trim($row['first_name'] . ' ' . $row['last_name']);
+		$provider->sendTemplate($toNumber, $config['template_name'], array($employeeName), $config['language_code'], $row['id'], 'Users');
+		$sent++;
+	}
+
+	echo "[WhatsApp Birthday - Employees] Sent: $sent, Skipped: $skipped\n";
+}
+
+whatsapp_birthday_employee_run();

@@ -1,0 +1,71 @@
+<?php
+/*+***********************************************************************************
+ * WhatsAppNotifier predefined cron - sends a WhatsApp birthday template to every
+ * Contact whose birthday (month+day) is today. Invoked by vtigercron.php via
+ * require_once; self-bootstraps per other cron handlers' convention (see
+ * cron/modules/AIAssistant/aiassistant.service).
+ *
+ * Admin-configurable via Settings > WhatsApp Cron Jobs (enable/template/language).
+ * This predefined job only covers the Contacts-birthday case; any other use case
+ * (different recipients, extra template params, etc.) should be built by hand in
+ * Settings > Workflows using the generic "WhatsApp Task" action instead.
+ *************************************************************************************/
+
+require_once 'include/database/PearDatabase.php';
+require_once 'vtlib/Vtiger/Utils.php';
+require_once 'vtlib/Vtiger/Functions.php';
+require_once 'modules/WhatsAppNotifier/WhatsAppNotifierSetup.php';
+require_once 'modules/WhatsAppNotifier/CronJobConfig.php';
+require_once 'modules/WhatsAppNotifier/providers/MetaCloudAPIProvider.php';
+
+function whatsapp_birthday_contact_run() {
+	$adb = PearDatabase::getInstance();
+
+	$config = WhatsAppNotifier_CronJobConfig_Model::getActiveConfig('birthday_contact');
+	if (!$config) {
+		echo "[WhatsApp Birthday - Contacts] Disabled or no template configured in Settings > WhatsApp Cron Jobs. Skipping.\n";
+		return;
+	}
+
+	try {
+		$provider = WhatsAppNotifier_MetaCloudAPIProvider_Model::getInstance();
+	} catch (Exception $e) {
+		echo '[WhatsApp Birthday - Contacts] Cannot start: ' . $e->getMessage() . "\n";
+		return;
+	}
+
+	$todayMonthDay = date('m-d');
+	$startOfToday = date('Y-m-d 00:00:00');
+
+	$result = $adb->pquery(
+		"SELECT cd.contactid, cd.firstname, cd.lastname, cd.mobile, cd.phone
+			FROM vtiger_contactdetails cd
+			INNER JOIN vtiger_contactsubdetails csd ON csd.contactsubscriptionid = cd.contactid
+			INNER JOIN vtiger_crmentity ce ON ce.crmid = cd.contactid AND ce.deleted = 0
+			WHERE csd.birthday IS NOT NULL AND DATE_FORMAT(csd.birthday, '%m-%d') = ?",
+		array($todayMonthDay)
+	);
+
+	$sent = 0;
+	$skipped = 0;
+	while ($row = $adb->fetch_array($result)) {
+		$toNumber = preg_replace('/[^0-9]/', '', $row['mobile'] ?: $row['phone']);
+		if (empty($toNumber)) {
+			$skipped++;
+			continue;
+		}
+
+		if (WhatsAppNotifier_CronJobConfig_Model::wasAlreadyNotifiedSince('Contacts', $row['contactid'], $config['template_name'], $startOfToday)) {
+			$skipped++;
+			continue;
+		}
+
+		$contactName = trim($row['firstname'] . ' ' . $row['lastname']);
+		$provider->sendTemplate($toNumber, $config['template_name'], array($contactName), $config['language_code'], $row['contactid'], 'Contacts');
+		$sent++;
+	}
+
+	echo "[WhatsApp Birthday - Contacts] Sent: $sent, Skipped: $skipped\n";
+}
+
+whatsapp_birthday_contact_run();

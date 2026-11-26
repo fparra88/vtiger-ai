@@ -1,0 +1,39 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_USER: vtiger
+      DB_PASSWORD: change_me
+      DB_NAME: vtigercrm
+      SITE_URL: http://localhost:8080/
+      ROOT_DIRECTORY: /var/www/html/
+      APPLICATION_UNIQUE_KEY: change_me_to_a_random_32_char_string
+    volumes:
+      - vtiger_cache:/var/www/html/cache
+      - vtiger_logs:/var/www/html/logs
+      - vtiger_storage:/var/www/html/storage
+      - vtiger_test:/var/www/html/test
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: change_me_root
+      MYSQL_DATABASE: vtigercrm
+      MYSQL_USER: vtiger
+      MYSQL_PASSWORD: change_me
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - vtiger_db:/var/lib/mysql
+
+volumes:
+  vtiger_cache:
+  vtiger_logs:
+  vtiger_storage:
+  vtiger_test:
+  vtiger_db:
